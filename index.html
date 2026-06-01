@@ -146,6 +146,8 @@ body{
 .diorama-frame{position:relative;max-width:100%;max-height:100%;line-height:0;will-change:transform}
 .diorama-img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;user-select:none;-webkit-user-drag:none}
 .hotspots{position:absolute;inset:0}
+.room-caps{position:absolute;inset:0;pointer-events:none;z-index:3}
+.room-cap{position:absolute;transform:translate(-50%,-50%);font-family:var(--font-disp);font-weight:700;font-size:13px;line-height:1;color:#fff;background:var(--accent);padding:5px 12px;border-radius:9px;white-space:nowrap;box-shadow:0 4px 12px -2px color-mix(in srgb,var(--accent) 55%,transparent);letter-spacing:.01em}
 
 .hotspot{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;border:0;background:none;cursor:pointer;padding:0;z-index:2;line-height:1;transition:opacity .35s}
 .hs-pin{position:relative;width:18px;height:18px;display:grid;place-items:center}
@@ -161,6 +163,10 @@ body{
 .hotspot.is-active{z-index:25}
 .hotspot.is-active .hs-label{background:var(--accent);color:#fff;border-color:var(--accent);transform:scale(1.16);box-shadow:0 5px 16px -2px color-mix(in srgb,var(--accent) 60%,transparent)}
 .hotspot.is-active .hs-dot{box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 26%,transparent),0 2px 6px rgba(20,32,58,.4)}
+.hotspot.is-draggable{cursor:grab}
+.hotspot.is-draggable:active{cursor:grabbing}
+.hotspot.is-draggable .hs-label{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 60%,#fff),0 3px 12px rgba(20,32,58,.22)}
+.edit-tools{display:flex;align-items:center;gap:8px}
 .hotspot.is-dim{opacity:.2}
 .hotspot.is-dim:hover{opacity:.9}
 
@@ -482,7 +488,7 @@ function roomLayout(zoneId, count, floorIndex) {
 function BuildingMap({ styleId, selectedCode, focusedZone, onSelect, onBackdrop }) {
   const byFloor = window.FLOOR_ORDER.map((zid) => ({
     zone: window.ZONES[zid],
-    items: window.CLASSES.filter((c) => c.zone === zid),
+    items: window.CLASSES.filter((c) => c.zone === zid && c.map !== false),
   }));
 
   let svgScale = 1, originY = 50;
@@ -618,7 +624,7 @@ const { useState: useStateD, useRef: useRefD, useEffect: useEffectD, useCallback
 
 const MIN_K = 0.7, MAX_K = 4.2, FOCUS_K = 1.85;
 
-function DioramaMap({ selectedCode, focusedZone, onSelect, onBackdrop, pulse }) {
+function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pulse, editMode, posOverrides, onDrag }) {
   const stageRef = useRefD(null);
   const frameRef = useRefD(null);
   const [view, setView] = useStateD({ k: 1, x: 0, y: 0 });
@@ -627,6 +633,7 @@ function DioramaMap({ selectedCode, focusedZone, onSelect, onBackdrop, pulse }) 
   const viewRef = useRefD(view);
   viewRef.current = view;
   const pan = useRefD(null);
+  const dragMoved = useRefD(false);
 
   const clampK = (k) => Math.min(MAX_K, Math.max(MIN_K, k));
 
@@ -645,7 +652,7 @@ function DioramaMap({ selectedCode, focusedZone, onSelect, onBackdrop, pulse }) 
       setAnimated(true);
       setView({ k: 1, x: 0, y: 0 });
     }
-  }, [focusedZone]);
+  }, [focusedZone, floor]);
 
   useEffectD(() => {
     const stage = stageRef.current;
@@ -697,6 +704,48 @@ function DioramaMap({ selectedCode, focusedZone, onSelect, onBackdrop, pulse }) 
 
   const activeZone = focusedZone || hoverZone;
 
+  // Раскладка хотспотов ровной сеткой внутри прямоугольника комнаты (zone.rect).
+  // позиция метки: ручная (posOverrides → c.pos) или авто-сетка «кирпичиком»
+  const getPos = (c) => (posOverrides && posOverrides[c.code]) || c.pos || null;
+  const layout = [];
+  window.FLOOR_ORDER.forEach((zid) => {
+    const z = window.ZONES[zid];
+    if (!z || (z.building || 1) !== floor) return;
+    const all = window.CLASSES.filter((c) => c.zone === zid && c.map !== false);
+    const r = z.rect || { x: 10, y: 40, w: 15, h: 36 };
+    const auto = all.filter((c) => !getPos(c));
+    const n = auto.length;
+    const perRow = n === 1 ? 1 : 2;
+    const rows = Math.ceil(n / perRow) || 1;
+    auto.forEach((c, i) => {
+      const row = Math.floor(i / perRow);
+      const itemsInRow = Math.min(perRow, n - row * perRow);
+      const col = i % perRow;
+      const stagger = row % 2 ? 0.09 : -0.09;
+      const fx = itemsInRow === 1 ? 0.5 : (col === 0 ? 0.27 : 0.73) + stagger;
+      const fy = rows === 1 ? 0.5 : (row + 0.5) / rows;
+      layout.push({ c, x: r.x + fx * r.w, y: r.y + fy * r.h, z });
+    });
+    all.forEach((c) => { const p = getPos(c); if (p) layout.push({ c, x: p.x, y: p.y, z }); });
+  });
+
+  const startDrag = (code) => (e) => {
+    if (!editMode || e.button !== 0) return;
+    e.stopPropagation(); e.preventDefault();
+    const frame = frameRef.current; if (!frame) return;
+    const rect = frame.getBoundingClientRect();
+    dragMoved.current = false;
+    const move = (ev) => {
+      dragMoved.current = true;
+      const x = Math.max(0, Math.min(100, ((ev.clientX - rect.left) / rect.width) * 100));
+      const y = Math.max(0, Math.min(100, ((ev.clientY - rect.top) / rect.height) * 100));
+      onDrag && onDrag(code, Math.round(x * 10) / 10, Math.round(y * 10) / 10);
+    };
+    const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
   return (
     <div className="diorama-stage" ref={stageRef}
          onClick={onBackdrop}
@@ -711,21 +760,32 @@ function DioramaMap({ selectedCode, focusedZone, onSelect, onBackdrop, pulse }) 
              transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})`,
              transition: animated ? "transform .62s cubic-bezier(.4,0,.2,1)" : "none",
            }}>
-        <img className="diorama-img" src="assets/diorama.png"
-             alt="Разрез предприятия: цех, склад, дата-центр, офисы" draggable="false" />
+        <img className="diorama-img" src={floor === 2 ? "assets/floor2.png" : "assets/floor1.png"}
+             alt="Разрез предприятия" draggable="false" />
+
+        <div className="room-caps">
+          {window.FLOOR_ORDER.filter((zid) => (window.ZONES[zid].building || 1) === floor).map((zid) => {
+            const z = window.ZONES[zid]; const r = z.rect || { x: 10, y: 40, w: 15 };
+            return (
+              <div key={zid} className="room-cap" style={{ left: `${r.x + r.w / 2}%`, top: `${(r.y || 40) - 17}%`, "--accent": z.accent }}>
+                {z.short || z.title}
+              </div>
+            );
+          })}
+        </div>
 
         <div className="hotspots">
-          {window.CLASSES.map((c) => {
-            const z = window.ZONES[c.zone];
+          {layout.map(({ c, x, y, z }) => {
             const active = c.code === selectedCode;
             const dim = activeZone && activeZone !== c.zone;
             return (
               <button key={c.code}
-                      className={`hotspot hs--${c.zone} ${active ? "is-active" : ""} ${dim ? "is-dim" : ""} ${pulse ? "" : "no-pulse-hs"}`}
-                      style={{ left: `${c.pos.x}%`, top: `${c.pos.y}%`, "--accent": z.accent }}
-                      onClick={(e) => { e.stopPropagation(); onSelect(c.code); }}
-                      onMouseEnter={() => setHoverZone(c.zone)}
-                      onMouseLeave={() => setHoverZone(null)}
+                      className={`hotspot hs--${c.zone} ${active ? "is-active" : ""} ${dim ? "is-dim" : ""} ${pulse ? "" : "no-pulse-hs"} ${editMode ? "is-draggable" : ""}`}
+                      style={{ left: `${x}%`, top: `${y}%`, "--accent": z.accent }}
+                      onPointerDown={editMode ? startDrag(c.code) : undefined}
+                      onClick={(e) => { e.stopPropagation(); if (editMode && dragMoved.current) { dragMoved.current = false; return; } onSelect(c.code); }}
+                      onMouseEnter={() => { if (!editMode) setHoverZone(c.zone); }}
+                      onMouseLeave={() => { if (!editMode) setHoverZone(null); }}
                       title={`${c.label} — ${c.name}`}>
                 <span className="hs-pin">
                   <span className="hs-ring" />
@@ -746,11 +806,11 @@ function DioramaMap({ selectedCode, focusedZone, onSelect, onBackdrop, pulse }) 
       </div>
 
       <div className="diorama-help" onClick={(e) => e.stopPropagation()}>
-        Колесо — зум · правая/средняя кнопка — перемещение
+        {editMode ? "Перетаскивайте метки мышью · затем «Сохранить»" : "Колесо — зум · правая/средняя кнопка — перемещение"}
       </div>
 
       <div className="diorama-zonekey">
-        {window.FLOOR_ORDER.map((zid) => {
+        {window.FLOOR_ORDER.filter((zid) => (window.ZONES[zid].building || 1) === floor).map((zid) => {
           const z = window.ZONES[zid];
           return (
             <button key={zid}
@@ -963,12 +1023,42 @@ function App() {
 
   const [selected, setSelected] = useState(null);
   const [glossaryOpen, setGlossaryOpen] = useState(false);
+  const [floor, setFloor] = useState(1);
 
   const mode = t.mode;
   const focusedZone = (t.autoFocus && selected) ? window.CLASS_BY_CODE[selected].zone : null;
 
-  const select = useCallback((code) => setSelected(code), []);
+  // выбор класса: переключаемся на этаж его зоны
+  const select = useCallback((code) => {
+    setSelected(code);
+    const c = window.CLASS_BY_CODE[code];
+    const b = c && window.ZONES[c.zone] && (window.ZONES[c.zone].building || 1);
+    if (b) setFloor(b);
+  }, []);
   const close = useCallback(() => setSelected(null), []);
+
+  // режим ручной расстановки меток (для админа)
+  const [me, setMe] = useState({ admin: false });
+  const [editMode, setEditMode] = useState(false);
+  const [posOv, setPosOv] = useState({});
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  useEffect(() => { fetch("/api/session", { credentials: "same-origin" }).then((r) => r.json()).then(setMe).catch(() => {}); }, []);
+  const onDrag = useCallback((code, x, y) => { setPosOv((p) => ({ ...p, [code]: { x, y } })); setDirty(true); }, []);
+  const savePositions = () => {
+    setSaving(true);
+    const classes = window.CLASSES.map((c) => (posOv[c.code] ? { ...c, pos: posOv[c.code] } : c));
+    fetch("/api/content", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ zones: window.ZONES, floorOrder: window.FLOOR_ORDER, classes, header: window.HEADER }) })
+      .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
+      .then((res) => {
+        if (res.ok) { window.CLASSES = classes; classes.forEach((c) => { window.CLASS_BY_CODE[c.code] = c; }); setPosOv({}); setDirty(false); setEditMode(false); }
+        else alert((res.j && res.j.error) || "Не удалось сохранить (нужны права администратора)");
+        setSaving(false);
+      })
+      .catch(() => { alert("Сеть недоступна"); setSaving(false); });
+  };
+  const cancelEdit = () => { setPosOv({}); setDirty(false); setEditMode(false); };
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") { setSelected(null); setGlossaryOpen(false); } };
@@ -992,10 +1082,24 @@ function App() {
         </div>
 
         <div className="topbar-actions">
+          {mode === "diorama" && (
+            <div className="style-switch floor-switch" role="tablist" aria-label="Этаж">
+              <button role="tab" aria-selected={floor === 1} className={`style-btn ${floor === 1 ? "is-active" : ""}`} onClick={() => setFloor(1)} title={(window.HEADER||{}).floor1}>1 этаж</button>
+              <button role="tab" aria-selected={floor === 2} className={`style-btn ${floor === 2 ? "is-active" : ""}`} onClick={() => setFloor(2)} title={(window.HEADER||{}).floor2}>2 этаж</button>
+            </div>
+          )}
           <div className="style-switch" role="tablist" aria-label="Режим карты">
             <button role="tab" aria-selected={mode === "diorama"} className={`style-btn ${mode === "diorama" ? "is-active" : ""}`} onClick={() => setTweak("mode", "diorama")}>Диорама</button>
             <button role="tab" aria-selected={mode === "schema"} className={`style-btn ${mode === "schema" ? "is-active" : ""}`} onClick={() => setTweak("mode", "schema")}>Схема</button>
           </div>
+          {me.admin && mode === "diorama" && (editMode ? (
+            <div className="edit-tools">
+              <button className="gloss-btn" onClick={cancelEdit}>Отмена</button>
+              <button className="gloss-btn is-active" disabled={saving || !dirty} onClick={savePositions}>{saving ? "Сохраняю…" : "Сохранить"}</button>
+            </div>
+          ) : (
+            <button className="gloss-btn" onClick={() => setEditMode(true)} title="Перетащить метки и сохранить">✎ Метки</button>
+          ))}
           <button className={`gloss-btn ${glossaryOpen ? "is-active" : ""}`}
                   onClick={() => setGlossaryOpen((v) => !v)}
                   aria-pressed={glossaryOpen}>
@@ -1033,7 +1137,8 @@ function App() {
 
         <main className="stage">
           {mode === "diorama" ? (
-            <DioramaMap selectedCode={selected} focusedZone={focusedZone} onSelect={select} onBackdrop={close} pulse={t.pulse} />
+            <DioramaMap floor={floor} selectedCode={selected} focusedZone={focusedZone} onSelect={select} onBackdrop={close} pulse={t.pulse}
+                        editMode={editMode} posOverrides={posOv} onDrag={onDrag} />
           ) : (
             <BuildingMap styleId="iso" selectedCode={selected} focusedZone={focusedZone} onSelect={select} onBackdrop={close} />
           )}
