@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Карта ИТ-предприятия · Globus IT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600;700;800&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+/* ===== Globus IT · Карта ИТ-предприятия ===== */
+:root{
+  --ink:#16203A; --ink-2:#51607A; --ink-3:#8A97AD;
+  --line:#E4E9F2; --line-2:#EEF2F8;
+  --primary:#0D41E1;
+  --canvas:#F6F8FB; --panel:#FFFFFF;
+  --r:14px;
+  --font-disp:"Onest",system-ui,sans-serif;
+  --font-body:"Golos Text",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:var(--font-body);
+  color:var(--ink);
+  background:var(--canvas);
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+}
+#root{height:100%}
+.app{height:100%;display:flex;flex-direction:column}
+
+/* ---------- Topbar ---------- */
+.topbar{
+  height:64px;flex:0 0 64px;
+  display:flex;align-items:center;gap:24px;
+  padding:0 22px;background:var(--panel);
+  border-bottom:1px solid var(--line);
+  position:relative;z-index:40;
+}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-logo{height:30px;width:auto;display:block}
+.brand-divider{width:1px;height:28px;background:var(--line)}
+.brand-text{line-height:1.05}
+.brand-sub{font-family:var(--font-disp);font-size:13.5px;font-weight:600;color:var(--ink);letter-spacing:-.005em}
+.topbar-center{flex:1;display:flex;justify-content:center}
+.tb-hint{font-size:12.5px;color:var(--ink-3)}
+
+.style-switch{
+  display:flex;gap:3px;padding:3px;
+  background:var(--canvas);border:1px solid var(--line);border-radius:11px;
+}
+.style-btn{
+  border:0;background:transparent;cursor:pointer;
+  font-family:var(--font-body);font-size:12.5px;font-weight:600;color:var(--ink-2);
+  padding:7px 14px;border-radius:8px;transition:.18s;white-space:nowrap;
+}
+.style-btn:hover{color:var(--ink)}
+.style-btn.is-active{background:var(--panel);color:var(--primary);box-shadow:0 1px 4px rgba(20,32,58,.1)}
+
+/* ---------- Stage ---------- */
+.stage-wrap{flex:1;display:flex;min-height:0;position:relative}
+.stage{flex:1;position:relative;min-width:0;overflow:hidden}
+.bmap{position:absolute;inset:0;width:100%;height:100%;display:block}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:440px;flex:0 0 440px;margin-left:-440px;background:var(--panel);
+  border-right:1px solid var(--line);
+  overflow:hidden;transition:margin-left .44s cubic-bezier(.4,0,.2,1);
+  z-index:30;
+}
+.sidebar--open{margin-left:0;box-shadow:14px 0 40px -28px rgba(20,32,58,.4)}
+.sidebar-inner{
+  width:440px;height:100%;overflow-y:auto;padding:24px 28px 40px;
+  animation:fadeUp .5s cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes fadeUp{from{transform:translateY(10px)}to{transform:none}}
+.sidebar-inner::-webkit-scrollbar{width:8px}
+.sidebar-inner::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+
+.sb-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.sb-zone{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em}
+.sb-zone-dot{width:9px;height:9px;border-radius:3px;background:var(--accent)}
+.sb-close{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);cursor:pointer;font-size:13px;transition:.16s}
+.sb-close:hover{background:var(--canvas);color:var(--ink)}
+
+.sb-code{
+  display:inline-block;font-family:var(--font-mono);font-weight:700;font-size:13px;
+  color:var(--accent);background:var(--tint);
+  padding:5px 11px;border-radius:8px;letter-spacing:.02em;
+}
+.sb-name{font-family:var(--font-disp);font-weight:700;font-size:25px;line-height:1.18;margin:13px 0 4px;letter-spacing:-.015em;text-wrap:balance}
+
+.sb-block{margin-top:22px}
+.sb-h{font-family:var(--font-disp);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);margin:0 0 8px}
+.sb-p{font-size:14.5px;line-height:1.55;color:var(--ink);margin:0;text-wrap:pretty}
+.sb-pain{background:var(--tint);border-radius:12px;padding:15px 16px;border:1px solid color-mix(in srgb,var(--accent) 16%,transparent)}
+.sb-pain .sb-h{color:color-mix(in srgb,var(--accent) 72%,var(--ink))}
+.sb-client{color:var(--ink-2);font-size:14px}
+
+/* metrics */
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.metric{background:var(--canvas);border:1px solid var(--line);border-radius:11px;padding:13px 11px;text-align:left}
+.metric-v{font-family:var(--font-disp);font-weight:800;font-size:21px;color:var(--accent);letter-spacing:-.02em;line-height:1}
+.metric-l{font-size:11px;color:var(--ink-2);margin-top:6px;line-height:1.3}
+
+/* vendors */
+.vendors{display:flex;flex-wrap:wrap;gap:7px}
+.vendor{font-size:13px;font-weight:500;color:var(--ink);background:var(--canvas);border:1px solid var(--line);padding:6px 11px;border-radius:8px}
+.vendor--own{background:color-mix(in srgb,var(--primary) 10%,#fff);border-color:color-mix(in srgb,var(--primary) 28%,#fff);color:#1f4fc4;font-weight:600}
+.vendors-note{font-size:11.5px;color:var(--ink-3);margin-top:9px;font-style:italic}
+.vendors-empty{font-size:13px;color:var(--ink-2);line-height:1.5;background:var(--canvas);border:1px dashed var(--line);border-radius:10px;padding:12px 14px}
+
+/* related */
+.related{display:flex;flex-direction:column;gap:7px}
+.related-chip{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;cursor:pointer;
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 12px;transition:.16s;
+}
+.related-chip:hover{border-color:var(--accent);background:var(--canvas);transform:translateX(2px)}
+.related-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex:0 0 auto}
+.related-code{font-family:var(--font-mono);font-weight:700;font-size:12px;color:var(--accent);flex:0 0 auto;min-width:54px}
+.related-name{font-size:12.5px;color:var(--ink-2);line-height:1.25}
+
+/* ---------- Overlays on stage ---------- */
+.empty-hint{position:absolute;left:22px;top:50%;transform:translateY(-50%);max-width:198px;pointer-events:none;z-index:5}
+.eh-card{background:transparent;border:0;padding:0;text-align:left}
+.eh-kicker{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.04em;color:var(--primary);text-transform:uppercase;font-weight:600;line-height:1.4}
+.eh-title{font-family:var(--font-disp);font-weight:700;font-size:18px;margin:10px 0 8px;letter-spacing:-.015em;line-height:1.18;color:var(--ink)}
+.eh-text{font-size:12.5px;color:var(--ink-2);line-height:1.5}
+@media (max-width:1280px){.empty-hint{display:none}}
+
+/* topbar actions + glossary */
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.gloss-btn{display:flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);font-family:var(--font-body);font-size:13px;font-weight:600;padding:8px 13px;border-radius:10px;cursor:pointer;transition:.16s}
+.gloss-btn:hover{color:var(--ink);border-color:var(--ink-3)}
+.gloss-btn.is-active{color:var(--primary);border-color:var(--primary);background:color-mix(in srgb,var(--primary) 8%,#fff)}
+.icon-btn{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);border-radius:10px;cursor:pointer;transition:.16s;flex:0 0 auto}
+.icon-btn:hover{color:var(--ink);border-color:var(--ink-3)}
+.icon-btn[aria-pressed="true"]{color:var(--primary);border-color:var(--primary)}
+
+/* Diorama */
+.diorama-stage{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;background:#FBFCFE}
+.diorama-frame{position:relative;max-width:100%;max-height:100%;line-height:0;will-change:transform}
+.diorama-img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;user-select:none;-webkit-user-drag:none}
+.hotspots{position:absolute;inset:0}
+
+.hotspot{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;border:0;background:none;cursor:pointer;padding:0;z-index:2;line-height:1;transition:opacity .35s}
+.hs-pin{position:relative;width:18px;height:18px;display:grid;place-items:center}
+.hs-dot{width:15px;height:15px;border-radius:50%;background:var(--accent);border:3px solid #fff;box-shadow:0 2px 7px rgba(20,32,58,.45);z-index:2}
+.hs-ring{position:absolute;width:15px;height:15px;border-radius:50%;background:var(--accent);opacity:.4;animation:hsPulse 3s ease-out infinite}
+@keyframes hsPulse{0%{transform:scale(1);opacity:.4}75%{transform:scale(2);opacity:0}100%{opacity:0}}
+.no-pulse .hs-ring,.no-pulse-hs .hs-ring{display:none}
+.hs-label{margin-top:5px;font-family:var(--font-mono);font-weight:700;font-size:14.5px;color:var(--accent);background:rgba(255,255,255,.96);backdrop-filter:blur(4px);border:1.5px solid color-mix(in srgb,var(--accent) 34%,#fff);padding:4px 10px;border-radius:8px;box-shadow:0 3px 12px rgba(20,32,58,.22);white-space:nowrap;transition:transform .16s cubic-bezier(.2,.8,.2,1),background .16s,color .16s,box-shadow .16s;transform-origin:center top}
+.hs-name{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:24px;background:#16203A;color:#fff;font-family:var(--font-body);font-size:12.5px;font-weight:500;padding:7px 11px;border-radius:8px;width:max-content;max-width:210px;white-space:normal;text-align:center;line-height:1.3;opacity:0;pointer-events:none;transition:opacity .15s;box-shadow:0 8px 24px -10px rgba(20,32,58,.6);z-index:20}
+.hotspot:hover{z-index:30}
+.hotspot:hover .hs-label{background:var(--accent);color:#fff;transform:scale(1.22);box-shadow:0 6px 18px -2px color-mix(in srgb,var(--accent) 55%,transparent)}
+.hotspot:hover .hs-name{opacity:1}
+.hotspot.is-active{z-index:25}
+.hotspot.is-active .hs-label{background:var(--accent);color:#fff;border-color:var(--accent);transform:scale(1.16);box-shadow:0 5px 16px -2px color-mix(in srgb,var(--accent) 60%,transparent)}
+.hotspot.is-active .hs-dot{box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 26%,transparent),0 2px 6px rgba(20,32,58,.4)}
+.hotspot.is-dim{opacity:.2}
+.hotspot.is-dim:hover{opacity:.9}
+
+.zone-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+
+.zoom-ctrl{position:absolute;top:18px;left:18px;display:flex;flex-direction:column;gap:6px;z-index:8}
+.zc-btn{width:38px;height:38px;border:1px solid var(--line);background:rgba(255,255,255,.94);backdrop-filter:blur(6px);color:var(--ink);font-size:18px;font-weight:600;border-radius:10px;cursor:pointer;display:grid;place-items:center;box-shadow:0 4px 14px -6px rgba(20,32,58,.4);transition:.15s;line-height:1}
+.zc-btn:hover{border-color:var(--primary);color:var(--primary)}
+.zc-reset{font-size:16px;margin-top:2px}
+
+.diorama-help{position:absolute;top:20px;left:50%;transform:translateX(-50%);font-size:11.5px;color:var(--ink-3);background:rgba(255,255,255,.82);backdrop-filter:blur(6px);border:1px solid var(--line);padding:6px 13px;border-radius:20px;z-index:6;white-space:nowrap}
+
+.diorama-zonekey{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:6;flex-wrap:wrap;justify-content:center;max-width:94%}
+.zk{display:flex;align-items:center;gap:7px;font-family:var(--font-body);font-size:12px;font-weight:600;color:var(--ink-2);background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border:1px solid var(--line);padding:8px 14px;border-radius:30px;cursor:pointer;box-shadow:0 8px 26px -18px rgba(20,32,58,.5);transition:.16s}
+.zk:hover{border-color:var(--accent);color:var(--ink)}
+.zk.is-on{color:var(--accent);border-color:var(--accent);background:#fff}
+.zk-dot{width:9px;height:9px;border-radius:3px;background:var(--accent)}
+
+/* Glossary */
+.glossary{width:404px;flex:0 0 404px;margin-right:-404px;background:var(--panel);border-left:1px solid var(--line);overflow:hidden;transition:margin-right .44s cubic-bezier(.4,0,.2,1);z-index:30}
+.glossary--open{margin-right:0;box-shadow:-14px 0 40px -28px rgba(20,32,58,.4)}
+.gl-inner{width:404px;height:100%;display:flex;flex-direction:column}
+.gl-head{display:flex;justify-content:space-between;align-items:flex-start;padding:22px 24px 16px}
+.gl-title{font-family:var(--font-disp);font-weight:700;font-size:18px;letter-spacing:-.01em}
+.gl-sub{font-size:12px;color:var(--ink-3);margin-top:2px}
+.gl-close{width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);cursor:pointer;font-size:13px;transition:.16s;flex:0 0 auto}
+.gl-close:hover{background:var(--canvas);color:var(--ink)}
+.gl-search{display:flex;align-items:center;gap:9px;margin:0 24px;padding:0 13px;border:1px solid var(--line);border-radius:11px;background:var(--canvas);color:var(--ink-3)}
+.gl-search:focus-within{border-color:var(--primary);color:var(--primary)}
+.gl-search input{flex:1;border:0;background:none;padding:11px 0;font-family:var(--font-body);font-size:14px;color:var(--ink);outline:none;min-width:0}
+.gl-search input::placeholder{color:var(--ink-3)}
+.gl-clear{border:0;background:none;color:var(--ink-3);cursor:pointer;font-size:12px;padding:4px}
+.gl-clear:hover{color:var(--ink)}
+.gl-count{font-family:var(--font-mono);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:12px 24px 6px}
+.gl-list{flex:1;overflow-y:auto;padding:0 18px 24px;display:flex;flex-direction:column;gap:8px}
+.gl-list::-webkit-scrollbar{width:8px}
+.gl-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+.gl-item{text-align:left;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:11px 14px;background:var(--panel);cursor:pointer;transition:.15s}
+.gl-item:hover{background:var(--canvas);transform:translateX(-2px)}
+.gl-item.is-active{background:color-mix(in srgb,var(--accent) 8%,#fff);border-color:var(--accent)}
+.gl-item-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.gl-code{font-family:var(--font-mono);font-weight:700;font-size:13.5px;color:var(--accent)}
+.gl-zone{font-size:10.5px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.03em}
+.gl-full{font-size:11.5px;color:var(--ink-3);margin-top:4px;font-style:italic;line-height:1.3}
+.gl-name{font-size:13.5px;color:var(--ink);font-weight:600;margin-top:3px;line-height:1.25}
+.gl-aka{font-size:11.5px;color:var(--ink-2);margin-top:6px;line-height:1.35}
+
+/* Card extras */
+.sb-full{font-size:13.5px;color:var(--ink-2);font-style:italic;margin-top:6px;line-height:1.4}
+.sb-aka{margin-top:15px;padding-top:14px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:8px}
+.sb-aka-label{font-family:var(--font-disp);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3)}
+.sb-aka-chips{display:flex;flex-wrap:wrap;gap:6px}
+.aka-chip{font-size:12px;color:color-mix(in srgb,var(--accent) 80%,var(--ink));background:var(--tint);border:1px solid color-mix(in srgb,var(--accent) 22%,#fff);padding:4px 9px;border-radius:7px}
+
+.bmap .marker-pulse{display:none}
+.bmap .marker-dot{fill:var(--accent)}
+
+@media (max-width:1180px){
+  .glossary{width:340px;flex-basis:340px;margin-right:-340px}
+  .gl-inner{width:340px}
+}
+
+/* Dark theme */
+.app.dark{
+  --ink:#EAEEF5; --ink-2:#AEB8C7; --ink-3:#7E8898;
+  --line:#3B414D; --line-2:#333944;
+  --canvas:#22262E; --panel:#2B303A;
+}
+.app.dark .diorama-stage{background:#1B1E24}
+.app.dark .topbar{background:#2B303A;border-bottom-color:#3B414D}
+.app.dark .brand-logo{background:#fff;border-radius:7px;padding:4px 9px}
+.app.dark .brand-divider{background:#3B414D}
+.app.dark .diorama-help,
+.app.dark .zk,
+.app.dark .zc-btn{background:rgba(43,48,58,.92);color:var(--ink-2)}
+.app.dark .zc-btn{color:var(--ink)}
+.app.dark .hs-label{background:rgba(43,48,58,.96);border-color:color-mix(in srgb,var(--accent) 50%,#2B303A)}
+.app.dark .metric,
+.app.dark .vendor,
+.app.dark .gl-search{background:#22262E}
+.app.dark .sb-close,
+.app.dark .gl-close{background:#2B303A}
+.app.dark .stage{background:#1B1E24}
+
+.legend{position:absolute;left:50%;transform:translateX(-50%);bottom:20px;display:flex;gap:18px;background:rgba(255,255,255,.86);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:30px;padding:9px 20px;z-index:6;box-shadow:0 8px 26px -18px rgba(20,32,58,.5)}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--ink-2)}
+.legend-dot{width:9px;height:9px;border-radius:3px}
+
+.reset-btn{position:absolute;top:18px;right:18px;z-index:7;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-family:var(--font-body);font-size:13px;font-weight:600;padding:9px 15px;border-radius:10px;cursor:pointer;box-shadow:0 6px 20px -12px rgba(20,32,58,.5);transition:.16s}
+.reset-btn:hover{border-color:var(--primary);color:var(--primary)}
+
+/* SVG building */
+.bmap-bg{fill:#EEF3FA}
+.ground-line{stroke:#CBD5E8;stroke-width:1.5}
+.ground-label{fill:#7E8CA8;font-family:var(--font-mono);font-size:12px;letter-spacing:.06em}
+.building-roof{fill:#D7E0EF}
+.roof-mast{stroke:#A9B7D0;stroke-width:2.4;stroke-linecap:round}
+.roof-mast-dot{fill:var(--primary)}
+.floor-divider{stroke:#E0E7F2;stroke-width:1.4}
+.floor-tag-title{font-family:var(--font-disp);font-weight:700;font-size:14px;fill:var(--ink);dominant-baseline:middle}
+.floor-tag-sub{font-family:var(--font-body);font-size:11px;fill:var(--ink-3);dominant-baseline:middle}
+.room-code{font-family:var(--font-mono);font-weight:700;font-size:15px;fill:var(--accent);letter-spacing:.01em}
+.room-code--long{font-size:11px}
+.room-name{
+  font-family:var(--font-body);font-size:11.5px;line-height:1.22;color:var(--ink-2);
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  padding-right:6px;
+}
+.marker-dot{fill:var(--accent)}
+.marker-pulse{fill:var(--accent);opacity:.45;transform-origin:center;animation:pulse 2.4s ease-out infinite}
+@keyframes pulse{0%{transform:scale(1);opacity:.5}70%{transform:scale(2.6);opacity:0}100%{opacity:0}}
+.no-pulse .marker-pulse{display:none}
+.room{transition:transform .2s}
+.room-box{transition:fill .18s,stroke .18s}
+
+/* ISO style */
+.bmap--iso .bmap-bg{fill:url(#skyGrad)}
+.bmap--iso .building-body{fill:#FFFFFF;stroke:#D2DCEC;stroke-width:1.5}
+.bmap--iso .floor-slab{fill:transparent}
+.bmap--iso .floor--sales .floor-slab{fill:#FDF3F0}
+.bmap--iso .floor--back .floor-slab{fill:#F1F4FD}
+.bmap--iso .floor--production .floor-slab{fill:#FAF2EA}
+.bmap--iso .floor--logistics .floor-slab{fill:#EDF7F4}
+.bmap--iso .floor--data .floor-slab{fill:#F2EFFB}
+.bmap--iso .floor--basement .floor-slab{fill:#ECEAF6}
+.bmap--iso .room-box{fill:#FFFFFF;stroke:color-mix(in srgb,var(--accent) 34%,#fff);stroke-width:1.4}
+.bmap--iso .room:hover .room-box{fill:var(--tint);stroke:var(--accent);stroke-width:1.8}
+.bmap--iso .room--active .room-box{fill:var(--tint);stroke:var(--accent);stroke-width:2.4}
+.bmap--iso .room:hover{transform:translateY(-2px)}
+
+/* Blueprint style */
+.bmap--blueprint .bmap-bg{fill:#F5F9FE}
+.bmap--blueprint .building-body{fill:rgba(46,107,255,.02);stroke:#2E6BFF;stroke-width:1.6}
+.bmap--blueprint .building-roof{fill:none;stroke:#2E6BFF;stroke-width:1.6}
+.bmap--blueprint .roof-mast{stroke:#2E6BFF}
+.bmap--blueprint .floor-slab{fill:transparent}
+.bmap--blueprint .floor-divider{stroke:#2E6BFF;stroke-opacity:.4;stroke-dasharray:6 5}
+.bmap--blueprint .ground-line{stroke:#2E6BFF;stroke-opacity:.5;stroke-dasharray:2 6;stroke-width:1.5}
+.bmap--blueprint .floor-tag-title{fill:#1f4fc4}
+.bmap--blueprint .floor-tag-sub{fill:#6E86C0}
+.bmap--blueprint .room-box{fill:rgba(255,255,255,.35);stroke:color-mix(in srgb,var(--accent) 60%,#5b80d8);stroke-width:1.3}
+.bmap--blueprint .room-code{fill:color-mix(in srgb,var(--accent) 60%,#234a9e)}
+.bmap--blueprint .room-name{color:#5c73a8}
+.bmap--blueprint .room:hover .room-box{fill:rgba(255,255,255,.85);stroke-width:2}
+.bmap--blueprint .room--active .room-box{fill:#fff;stroke-width:2.6}
+.bmap--blueprint .marker-pulse{opacity:.3}
+
+@media (max-width:1180px){
+  .sidebar{width:380px;flex-basis:380px;margin-left:-380px}
+  .sidebar-inner{width:380px}
+  .tb-hint{display:none}
+}
+@media (max-width:920px){
+  .sidebar{width:320px;flex-basis:320px;margin-left:-320px}
+  .sidebar-inner{width:320px;padding:18px 18px 32px}
+  .legend{gap:11px;padding:8px 14px}
+  .legend-item{font-size:11px}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<!-- Data layer -->
+<script>
+window.ZONES = {
+  production: { id: "production", title: "Производство и цех",        short: "Производство",   accent: "#C8743A", tint: "#F8EDE2", cx: 25, cy: 34, floor: 2 },
+  logistics:  { id: "logistics",  title: "Склад и логистика",         short: "Склад · двор",   accent: "#1F9E8E", tint: "#E3F4F1", cx: 76, cy: 34, floor: 1 },
+  data:       { id: "data",       title: "Дата-центр и кибербез",     short: "Слой данных",    accent: "#6E56CF", tint: "#ECE8FA", cx: 55, cy: 50, floor: 0 },
+  sales:      { id: "sales",      title: "Офис продаж и маркетинг",   short: "Продажи",        accent: "#E0654E", tint: "#FCEDE9", cx: 24, cy: 74, floor: 4 },
+  back:       { id: "back",       title: "Бэк-офис: HR и финансы",    short: "Бэк-офис",       accent: "#3E63DD", tint: "#E9EEFC", cx: 82, cy: 72, floor: 3 },
+};
+window.FLOOR_ORDER = ["sales", "back", "production", "logistics", "data"];
+window.CLASSES = [
+  { code: "ASUTP", label: "АСУ ТП", zone: "production", pos: { x: 13, y: 31 },
+    name: "Автоматизация технологических процессов",
+    full: "Автоматизированная система управления технологическим процессом",
+    aka: ["SCADA", "DCS", "ПЛК / PLC", "КИПиА", "MOM"],
+    what: "Управляет станками и линиями в реальном времени: датчики, контроллеры и щиты, которые держат технологический режим без человека.",
+    pain: "Оборудование работает вразнобой, режимы нарушаются, брак и аварии из-за ручного управления и человеческого фактора.",
+    metrics: [{ v: "−25%", l: "аварийных остановов" }, { v: "+12%", l: "выход годной продукции" }, { v: "24/7", l: "контроль режима" }],
+    vendors: [], related: ["MES", "EAM", "CV"],
+    client: "Промышленность: нефтегаз, химия, металлургия, энергетика." },
+  { code: "CV", label: "CV", zone: "production", pos: { x: 30, y: 25 },
+    name: "Компьютерное зрение и контроль качества",
+    full: "Computer Vision",
+    aka: ["машинное зрение", "видеоаналитика", "AI-инспекция качества", "NLP", "DL — глубокое обучение"],
+    what: "Камеры с ИИ проверяют продукцию на конвейере, считают объекты и следят за техникой безопасности — быстрее и точнее человека.",
+    pain: "Контроль качества выборочный и субъективный, брак уходит клиенту, нарушения ТБ замечают только после инцидента.",
+    metrics: [{ v: "99,5%", l: "точность выявления брака" }, { v: "×10", l: "скорость контроля" }, { v: "−50%", l: "рекламаций клиентов" }],
+    vendors: ["Kognitive — CV/ML (группа)", "SOICA — распознавание (SLSoft)", "Преферентум — ML (SLSoft)"],
+    related: ["MES", "ASUTP", "BIGD"], client: "Пищепром, фарма, сборочные производства, добыча." },
+  { code: "MES", label: "MES", zone: "production", pos: { x: 24, y: 36 },
+    name: "Управление производством",
+    full: "Manufacturing Execution System",
+    aka: ["СОУП", "MOM (Manufacturing Operations Management)", "оперативное управление производством"],
+    what: "Мост между планом из ERP и реальным цехом: сменные задания, учёт выработки, контроль простоев и прослеживаемость партий.",
+    pain: "План «спускают» в цех на бумаге, факт собирают вечером, причины простоев теряются, себестоимость партии неизвестна.",
+    metrics: [{ v: "+15%", l: "загрузка оборудования (OEE)" }, { v: "−30%", l: "простои без причин" }, { v: "партия", l: "полная прослеживаемость" }],
+    vendors: [], related: ["ERP", "ASUTP", "EAM", "WMS"],
+    client: "Дискретное и непрерывное производство, пищепром, машиностроение." },
+  { code: "EAM", label: "EAM", zone: "production", pos: { x: 40, y: 40 },
+    name: "ТОиР — управление активами и ремонтами",
+    full: "Enterprise Asset Management",
+    aka: ["ТОиР / ТОРО", "CMMS", "APM (Asset Performance Management)", "управление фондами"],
+    what: "Паспорт каждого станка, график обслуживания и склад запчастей. Ремонт по плану, а не по факту поломки.",
+    pain: "Оборудование чинят, когда оно встало; запчастей нет в нужный момент; история ремонтов не ведётся, ресурс активов сгорает.",
+    metrics: [{ v: "−35%", l: "внеплановые простои" }, { v: "+20%", l: "срок службы оборудования" }, { v: "−25%", l: "запасы ЗИП" }],
+    vendors: [], related: ["MES", "ASUTP", "ERP"],
+    client: "Фондоёмкие отрасли: металлургия, энергетика, транспорт, ЖКХ." },
+  { code: "APS", label: "APS", zone: "production", pos: { x: 19, y: 46 },
+    name: "Синхронное планирование производства",
+    full: "Advanced Planning & Scheduling",
+    aka: ["объёмно-календарное планирование", "синхронное планирование", "планирование цеха"],
+    what: "Строит реалистичный график производства с учётом мощностей, материалов и сроков — что, на каком станке и когда делать.",
+    pain: "План из ERP оторван от реальности цеха: не учитывает загрузку станков и наличие сырья — отсюда срывы сроков и авралы.",
+    metrics: [{ v: "+15%", l: "соблюдение сроков" }, { v: "−20%", l: "незавершённое производство" }, { v: "часы", l: "на перепланирование" }],
+    vendors: [], related: ["MES", "ERP", "EAM"],
+    client: "Дискретное производство: машиностроение, мебель, электроника." },
+  { code: "SRM", label: "SRM", zone: "logistics", pos: { x: 62, y: 30 },
+    name: "Управление закупками и поставщиками",
+    full: "Supplier Relationship Management",
+    aka: ["e-Procurement", "ЭТП закупок", "SRM/SCM", "управление снабжением", "сбыт (SD)"],
+    what: "Электронные закупки: заявки, тендеры, рейтинг поставщиков и контроль договоров в одном окне — прозрачно и по регламенту.",
+    pain: "Закупки непрозрачны, поставщиков выбирают «по знакомству», заявки теряются, нет истории цен и контроля бюджета.",
+    metrics: [{ v: "−12%", l: "стоимость закупок" }, { v: "−40%", l: "срок согласования" }, { v: "100%", l: "прозрачность тендеров" }],
+    vendors: ["Seldon.Pro — поиск закупок", "Seldon.Control — контроль", "Seldon.Price — НМЦК"],
+    related: ["ERP", "WMS"], client: "Производство, строительство, госкомпании, ритейл." },
+  { code: "WMS", label: "WMS", zone: "logistics", pos: { x: 87, y: 23 },
+    name: "Управление складом",
+    full: "Warehouse Management System",
+    aka: ["СУС", "складская система", "адресный склад", "маркировка «Честный знак»"],
+    what: "Адресное хранение и подсказки кладовщику через ТСД: куда положить, где взять, как собрать заказ кратчайшим путём.",
+    pain: "Товар ищут по памяти, пересортица и потери, инвентаризация останавливает склад на сутки, новый сотрудник входит месяцами.",
+    metrics: [{ v: "+40%", l: "скорость отгрузки" }, { v: "−70%", l: "ошибки комплектации" }, { v: "99,9%", l: "точность остатков" }],
+    vendors: ["GT STOCK WMS (GTLogistics)", "Складское решение Globus"],
+    related: ["YMS", "TMS", "ERP", "B2X"], client: "Распредцентры, e-commerce, дистрибуция, производство." },
+  { code: "TMS", label: "TMS", zone: "logistics", pos: { x: 80, y: 40 },
+    name: "Управление транспортом и доставкой",
+    full: "Transportation Management System",
+    aka: ["СУТ", "управление логистикой", "маршрутизация", "Supply Chain", "last-mile"],
+    what: "Планирование маршрутов, подбор машин и контроль доставки на карте: оптимальный путь, загрузка и стоимость рейса.",
+    pain: "Маршруты строят вручную, машины едут полупустыми, клиент не знает время доставки, логистика — чёрный ящик по затратам.",
+    metrics: [{ v: "−20%", l: "транспортные расходы" }, { v: "+25%", l: "загрузка автопарка" }, { v: "online", l: "трекинг доставки" }],
+    vendors: ["GT ROUTE (GTLogistics)", "GT DRIVE (GTLogistics)"],
+    related: ["WMS", "YMS", "ERP"], client: "Дистрибуция, ритейл, FMCG, транспортные компании." },
+  { code: "YMS", label: "YMS", zone: "logistics", pos: { x: 73, y: 45 },
+    name: "Управление двором и воротами",
+    full: "Yard Management System",
+    aka: ["управление двором", "тайм-слотирование", "электронная очередь транспорта", "dock scheduling"],
+    what: "Электронная очередь транспорта: тайм-слоты на разгрузку, контроль ворот и перемещений по территории склада.",
+    pain: "Фуры стоят в очереди часами, ворота простаивают, водители и охрана общаются «на пальцах», территория в хаосе.",
+    metrics: [{ v: "−50%", l: "простой транспорта" }, { v: "+30%", l: "пропускная способность ворот" }, { v: "0", l: "потерянных машин" }],
+    vendors: [], related: ["WMS", "TMS"],
+    client: "Крупные склады, РЦ ритейла, производственные площадки." },
+  { code: "DWH", label: "DWH", zone: "data", pos: { x: 47, y: 43 },
+    name: "Хранилище данных",
+    full: "Data Warehouse",
+    aka: ["ХД / КХД", "ECM", "Data Lake (озеро данных)", "NAS — сетевое хранилище", "Lakehouse"],
+    what: "Единое хранилище, куда стекаются данные из всех систем. Основа для отчётности и дашбордов руководителя.",
+    pain: "Отчёты собирают вручную из разных систем, цифры не сходятся, к моменту готовности данные устаревают, решения принимают вслепую.",
+    metrics: [{ v: "1", l: "источник правды" }, { v: "−70%", l: "время сбора отчётности" }, { v: "лет", l: "глубина истории" }],
+    vendors: ["Compo Data Platform (Compo)", "ANG Platform (Argument)", "Loginom"],
+    related: ["ESB", "BI", "BIGD", "MDM"], client: "Любая компания с несколькими системами и потребностью в аналитике." },
+  { code: "MDM", label: "MDM", zone: "data", pos: { x: 57, y: 41 },
+    name: "Управление мастер-данными (НСИ)",
+    full: "Master Data Management",
+    aka: ["НСИ", "нормативно-справочная информация", "мастер-данные", "справочники", "Data Quality"],
+    what: "Единые эталонные справочники (контрагенты, номенклатура) для всех систем — без дублей и разночтений.",
+    pain: "В каждой системе свой справочник: один контрагент записан пять раз по-разному, отчёты не сходятся, интеграции ломаются.",
+    metrics: [{ v: "−90%", l: "дублей в справочниках" }, { v: "1", l: "эталон НСИ" }, { v: "авто", l: "очистка и дедупликация" }],
+    vendors: ["DATAREON Platform — MDM", "Compo MDM (Compo)", "1С Глобус — MDM (Globus)"],
+    related: ["DWH", "ESB", "ERP"], client: "Холдинги, ритейл, производство с большой номенклатурой." },
+  { code: "BIGD", label: "Big Data", zone: "data", pos: { x: 61, y: 49 },
+    name: "Big Data и ML-инфраструктура",
+    full: "Big Data & Machine Learning Platform",
+    aka: ["озеро данных", "ML-платформа", "MLOps", "Data Science", "продвинутая аналитика"],
+    what: "Платформа для хранения и обработки больших данных: прогнозы спроса, рекомендации, предиктивные модели на терабайтах информации.",
+    pain: "Данных много, а пользы нет: обычные системы не тянут объёмы, дата-сайентистам негде считать модели, прогнозы делают «на глаз».",
+    metrics: [{ v: "ТБ–ПБ", l: "масштаб обработки" }, { v: "+18%", l: "точность прогноза спроса" }, { v: "ML", l: "модели в проде" }],
+    vendors: ["Seldon.AI Data — данные для ИИ", "ANG Platform — Lakehouse (Argument)", "Loginom"],
+    related: ["DWH", "CV", "AIAG", "EPM"], client: "Ритейл, телеком, банки, промышленность с большими данными." },
+  { code: "BI", label: "BI", zone: "data", pos: { x: 42, y: 50 },
+    name: "Бизнес-аналитика и дашборды",
+    full: "Business Intelligence",
+    aka: ["дашборды", "OLAP", "self-service аналитика", "отчётность", "визуализация данных"],
+    what: "Наглядные дашборды и отчёты: руководитель видит ключевые показатели бизнеса в реальном времени, без выгрузок в Excel.",
+    pain: "Отчёты собирают вручную дни напролёт, у каждого своя версия правды, решения принимают на устаревших данных.",
+    metrics: [{ v: "−70%", l: "время на отчётность" }, { v: "online", l: "показатели в реальном времени" }, { v: "self", l: "аналитика без ИТ" }],
+    vendors: ["Polymatica (SLSoft)", "PIX BI", "Proceset — BI (Инфомаксимум)"],
+    related: ["DWH", "EPM", "BIGD"], client: "Любой бизнес, принимающий решения на данных." },
+  { code: "DEVOPS", label: "DevOps", zone: "data", pos: { x: 69, y: 52 },
+    name: "DevOps и конвейер разработки",
+    full: "DevOps / CI-CD Platform",
+    aka: ["CI/CD", "непрерывная поставка", "ИТ-конвейер", "DevSecOps"],
+    what: "Единая среда для всего цикла разработки ПО — от кода до продакшена, с автоматическими сборками и развёртыванием.",
+    pain: "Релизы вручную и по выходным, ошибки на проде, разработка и эксплуатация воюют, зависимость от зарубежных инструментов.",
+    metrics: [{ v: "×5", l: "частота релизов" }, { v: "−60%", l: "ошибок на проде" }, { v: "100%", l: "импортонезависимость" }],
+    vendors: ["Сфера (Т1)"], related: ["ESB", "BIGD"],
+    client: "Компании с собственной разработкой ПО, ИТ-команды." },
+  { code: "PAM", label: "PAM", zone: "data", pos: { x: 47, y: 56 },
+    name: "Контроль привилегированного доступа",
+    full: "Privileged Access Management",
+    aka: ["PIM / PUM", "контроль администраторов", "управление секретами", "СКУД для ИТ"],
+    what: "Сейф для паролей администраторов: кто, когда и к какому серверу подключался, с записью сессий — доступ под полным контролем.",
+    pain: "Админские пароли «гуляют» в чатах и стикерах, действия в критичных системах не отследить, уволенный сотрудник сохраняет доступ.",
+    metrics: [{ v: "100%", l: "учёт привилегий" }, { v: "0", l: "общих паролей" }, { v: "запись", l: "всех сессий" }],
+    vendors: [], related: ["SIEM", "ESB"],
+    client: "Банки, госсектор, КИИ, крупная ИТ-инфраструктура." },
+  { code: "ESB", label: "ESB", zone: "data", pos: { x: 56, y: 59 },
+    name: "Интеграционная шина данных",
+    full: "Enterprise Service Bus",
+    aka: ["интеграционная шина", "iPaaS", "middleware", "брокер сообщений", "API-шлюз"],
+    what: "«Нервная система» предприятия: системы обмениваются данными через единый стандарт, а не через хрупкие связи «каждый с каждым».",
+    pain: "Десятки точечных интеграций рвутся при любом обновлении, данные дублируются и расходятся, новая система подключается месяцами.",
+    metrics: [{ v: "−60%", l: "стоимость интеграций" }, { v: "×3", l: "скорость подключения" }, { v: "1", l: "стандарт обмена" }],
+    vendors: ["DATAREON ESB (Datareon)", "DATAREON Platform", "Compo ESB (Compo)"],
+    related: ["ERP", "DWH", "MDM", "WMS"], client: "Компании с 5+ информационными системами, холдинги." },
+  { code: "SIEM", label: "SIEM", zone: "data", pos: { x: 64, y: 57 },
+    name: "Кибербезопасность и мониторинг угроз",
+    full: "Security Information and Event Management",
+    aka: ["XDR — расширенное обнаружение", "SOC-платформа", "Pentest — пентест", "Compliance", "ASM / DRP"],
+    what: "Собирает логи со всех систем и в реальном времени ловит атаки и аномалии — служба безопасности видит угрозу до того, как она нанесёт ущерб.",
+    pain: "Атаку замечают по факту утечки или простоя; логи разрознены, инцидент не расследовать, регуляторные требования не выполнены.",
+    metrics: [{ v: "минуты", l: "на выявление атаки" }, { v: "−80%", l: "время расследования" }, { v: "152-ФЗ", l: "соответствие" }],
+    vendors: ["OU Intelligence — ASM/DRP/CPT (OctoUnit)", "Пентест (OctoUnit)"],
+    related: ["PAM", "ESB", "DWH"], client: "Банки, госкомпании, КИИ, любой бизнес с чувствительными данными." },
+  { code: "MMS", label: "MMS", zone: "sales", pos: { x: 13, y: 61 },
+    name: "Маркетинг и управление кампаниями",
+    full: "Marketing Management System",
+    aka: ["MarTech", "CDP (Customer Data Platform)", "автоматизация маркетинга", "программы лояльности (LM)"],
+    what: "Запуск и аналитика рассылок, акций и рекламы: сегментация аудитории, A/B-тесты, сквозная воронка от показа до покупки.",
+    pain: "Маркетинг тратит бюджет «вслепую»: непонятно, какой канал приносит деньги, а какой — только клики.",
+    metrics: [{ v: "−30%", l: "стоимость привлечения" }, { v: "+22%", l: "повторные покупки" }, { v: "ROMI", l: "прозрачность вложений" }],
+    vendors: [], related: ["CRM", "OCP", "DWH"], client: "Ритейл, e-commerce, финтех, медиа." },
+  { code: "OCP", label: "OCP", zone: "sales", pos: { x: 33, y: 64 },
+    name: "Омниканальная платформа",
+    full: "Omnichannel Platform",
+    aka: ["омниканальность", "Service Desk / Help Desk", "единое окно коммуникаций", "CCaaS"],
+    what: "Объединяет все каналы общения с клиентом — сайт, приложение, колл-центр, мессенджеры — в одну ленту, где история не теряется.",
+    pain: "Клиент пишет в Telegram, потом звонит — и каждый раз объясняет всё заново. Каналы разрознены, аналитики по ним нет.",
+    metrics: [{ v: "−45%", l: "время первого ответа" }, { v: "+18%", l: "лояльность (NPS)" }, { v: "1", l: "окно для всех каналов" }],
+    vendors: ["Метабот — OMNI (Метарекс)", "Robovoice — голосовые боты (SLSoft)"],
+    related: ["CRM", "B2X", "AIAG"], client: "Ритейл, телеком, банки, сервисные компании с массовым клиентом." },
+  { code: "CRM", label: "CRM", zone: "sales", pos: { x: 17, y: 73 },
+    name: "Управление отношениями с клиентами",
+    full: "Customer Relationship Management",
+    aka: ["СУВ", "система продаж", "управление сделками", "PM — трекеры задач/проектов"],
+    what: "Единая база клиентов, сделок и истории общения. Менеджер видит, кто звонил, что покупал и на каком этапе «завис» каждый контракт.",
+    pain: "Клиенты теряются в почте и блокнотах, сделки забываются, а руководитель не понимает, чем занят отдел продаж и почему падает выручка.",
+    metrics: [{ v: "+25–30%", l: "конверсия в сделку" }, { v: "−40%", l: "потерянных обращений" }, { v: "×2", l: "скорость обработки заявки" }],
+    vendors: ["Seldon.Doc — тендерный CRM", "G-hunt — HR CRM (Globus)"],
+    related: ["OCP", "MMS", "B2X", "ERP"], client: "Любой бизнес с активными продажами: банки, ритейл, дистрибуция, услуги." },
+  { code: "AIAG", label: "AI-агенты", zone: "sales", pos: { x: 38, y: 73 },
+    name: "AI-агенты и ИИ-ассистенты",
+    full: "AI Agents / ИИ-ассистенты",
+    aka: ["чат-боты", "NLU", "голосовые боты", "предиктивная аналитика", "RAG", "low-code конструктор ботов"],
+    what: "Умные помощники на базе ИИ: отвечают клиентам и сотрудникам, ищут по базе знаний, выполняют сценарии в мессенджерах и на сайте.",
+    pain: "Операторы тонут в однотипных вопросах, ночью клиента некому обслужить, знания компании разбросаны и недоступны.",
+    metrics: [{ v: "−60%", l: "нагрузка на операторов" }, { v: "24/7", l: "мгновенные ответы" }, { v: "+30%", l: "скорость обслуживания" }],
+    vendors: ["Osmi AI — AI-агенты", "Метабот (Метарекс)", "Robovoice (SLSoft)"],
+    related: ["OCP", "CRM", "BIGD"], client: "Ритейл, банки, телеком, HR- и ИТ-службы." },
+  { code: "B2X", label: "B2B/B2C", zone: "sales", pos: { x: 21, y: 82 },
+    name: "B2B / B2C платформы e-commerce",
+    full: "Business-to-Business / Business-to-Consumer e-commerce",
+    aka: ["электронная торговая площадка", "интернет-магазин", "дилерский портал", "личные кабинеты", "B2G"],
+    what: "Интернет-витрина и личный кабинет, где клиент сам собирает заказ, видит цены, остатки и статус доставки — без звонка менеджеру.",
+    pain: "Заказы принимаются вручную по телефону и Excel: ошибки в номенклатуре, нет круглосуточных продаж, дилеры не видят персональные цены.",
+    metrics: [{ v: "+35%", l: "онлайн-выручка за год" }, { v: "−60%", l: "ручных операций" }, { v: "24/7", l: "приём заказов" }],
+    vendors: ["Compo B2B/B2C Platform (Compo)", "Автотовары / Электротовары (Compo)"],
+    related: ["CRM", "OCP", "MPL", "WMS"], client: "Производители и дистрибьюторы, оптовая торговля, ритейл." },
+  { code: "MPL", label: "MPL", zone: "sales", pos: { x: 33, y: 85 },
+    name: "Интеграция с маркетплейсами",
+    full: "Marketplace Integration",
+    aka: ["маркетплейс-интеграции", "Ozon / Wildberries / Я.Маркет", "управление продажами на площадках"],
+    what: "Связывает учётную систему с маркетплейсами: остатки, цены, заказы и контент синхронизируются автоматически.",
+    pain: "Продажи на маркетплейсах ведут вручную в личных кабинетах: пересортица, штрафы за просрочку, нет единой картины.",
+    metrics: [{ v: "авто", l: "синхронизация остатков" }, { v: "−50%", l: "ручных операций" }, { v: "1", l: "окно для всех площадок" }],
+    vendors: ["Compo MPL (Compo)"],
+    related: ["B2X", "PIM", "WMS"], client: "Селлеры, бренды и дистрибьюторы на маркетплейсах." },
+  { code: "PIM", label: "PIM", zone: "sales", pos: { x: 28, y: 84 },
+    name: "Управление данными о товаре",
+    full: "Product Information Management",
+    aka: ["DAM — цифровые активы", "карточки товаров", "контент-платформа", "каталог"],
+    what: "Единый каталог характеристик, фото и описаний товара для сайта, маркетплейсов и дилеров — заполняется один раз.",
+    pain: "Карточки товаров ведут в Excel и правят вручную на каждой площадке: ошибки, рассинхрон, медленный вывод товара в продажу.",
+    metrics: [{ v: "×3", l: "скорость вывода товара" }, { v: "−70%", l: "ошибок в карточках" }, { v: "1", l: "источник контента" }],
+    vendors: ["Compo PIM (Compo)", "Compo DAM (Compo)"],
+    related: ["B2X", "MPL", "MDM"], client: "Производители, дистрибьюторы, e-commerce с большим каталогом." },
+  { code: "EDO", label: "ЭДО/СЭД", zone: "back", pos: { x: 76, y: 57 },
+    name: "Электронный документооборот",
+    full: "Электронный документооборот (ЭДО / СЭД)",
+    aka: ["СЭД", "ЮЗ ЭДО", "электронное досье", "документооборот с контрагентами", "ECM"],
+    what: "Обмен юридически значимыми документами с контрагентами и внутри компании в электронном виде — без бумаги и курьеров.",
+    pain: "Договоры и акты теряются, подписание тянется неделями, архив бумаг занимает комнаты, согласование не отследить.",
+    metrics: [{ v: "−80%", l: "бумаги и курьеров" }, { v: "часы", l: "вместо недель на подпись" }, { v: "100%", l: "юр. значимость" }],
+    vendors: ["Цитрос ЮЗ ЭДО (SLSoft)", "Цитрос — Электронное досье"],
+    related: ["KEDO", "ERP", "DWH"], client: "Любой бизнес с документооборотом и контрагентами." },
+  { code: "KEDO", label: "КЭДО", zone: "back", pos: { x: 88, y: 59 },
+    name: "Кадровый электронный документооборот",
+    full: "Кадровый электронный документооборот (HR EDM)",
+    aka: ["HR-ЭДО", "электронная подпись кадровых документов", "HR Document Management"],
+    what: "Перевод кадровых документов в цифру: заявления, приказы, ознакомления подписываются электронной подписью со смартфона.",
+    pain: "Бумажные приказы и подписи: курьеры в регионы, потерянные заявления, недели на сбор подписей у удалённых сотрудников.",
+    metrics: [{ v: "−80%", l: "расходы на бумагу" }, { v: "минуты", l: "вместо дней на подпись" }, { v: "100%", l: "юр. значимость" }],
+    vendors: ["1С:Кабинет сотрудника", "HR-Link", "Контур.КЭДО"],
+    related: ["HRM", "LMS", "EDO"], client: "Распределённые компании, ритейл, логистика, промышленность." },
+  { code: "ERP", label: "ERP", zone: "back", pos: { x: 69, y: 69 },
+    name: "Планирование ресурсов предприятия",
+    full: "Enterprise Resource Planning",
+    aka: ["АСУП", "учётная система", "«1С»", "корпоративная ИС", "REM — управление имуществом"],
+    what: "Сердце компании: финансы, закупки, производство и склад в одной системе. Один источник правды для всех подразделений.",
+    pain: "Десятки несвязанных программ и таблиц, данные расходятся, закрытие месяца занимает недели, а себестоимость считают «на коленке».",
+    metrics: [{ v: "−50%", l: "срок закрытия периода" }, { v: "+20%", l: "оборачиваемость запасов" }, { v: "1", l: "источник данных" }],
+    vendors: ["1С Глобус — фин/АХД, MDM (Globus)"],
+    related: ["EPM", "WMS", "MES", "ESB", "CRM"], client: "Средний и крупный бизнес: производство, дистрибуция, холдинги." },
+  { code: "HRM", label: "HRM", zone: "back", pos: { x: 80, y: 73 },
+    name: "Управление персоналом",
+    full: "Human Resource Management",
+    aka: ["HCM (Human Capital Management)", "HRMS", "WFM — управление сменами", "TAM — учёт времени", "СКУД", "контроль СИЗ"],
+    what: "Кадровый учёт, расчёт зарплаты, графики, отпуска и охрана труда. Вся жизнь сотрудника от приёма до увольнения.",
+    pain: "Кадры тонут в бумаге, расчёт ЗП с ошибками, нет картины по текучести и затратам на персонал.",
+    metrics: [{ v: "−35%", l: "трудозатраты кадров" }, { v: "0", l: "ошибок в расчёте ЗП" }, { v: "+15%", l: "удержание людей" }],
+    vendors: ["HR-система БОСС (SLSoft)", "Сбер Пульс", "G-hunt (Globus)"],
+    related: ["LMS", "KEDO", "ERP"], client: "Компании от 200 сотрудников, производство, розничные сети." },
+  { code: "EPM", label: "EPM", zone: "back", pos: { x: 92, y: 67 },
+    name: "Бюджетирование и эффективность",
+    full: "Enterprise Performance Management",
+    aka: ["CPM (Corporate Performance Management)", "система бюджетирования", "FP&A", "управленческий учёт"],
+    what: "Планирование бюджета, сбор факта и сценарный анализ «что если». Превращает стратегию в цифры и контролирует их исполнение.",
+    pain: "Бюджет живёт в сотне Excel-файлов, версии путаются, план-факт собирается вручную и устаревает к моменту готовности.",
+    metrics: [{ v: "−60%", l: "время формирования бюджета" }, { v: "+30%", l: "точность прогноза" }, { v: "online", l: "план-факт онлайн" }],
+    vendors: ["Polymatica — BI (SLSoft)", "PIX BI", "Proceset (Инфомаксимум)"],
+    related: ["ERP", "DWH", "BI"], client: "Холдинги, крупные предприятия, финансовые службы." },
+  { code: "RPA", label: "RPA", zone: "back", pos: { x: 72, y: 81 },
+    name: "Программные роботы (RPA)",
+    full: "Robotic Process Automation",
+    aka: ["IPA — интеллектуальная автоматизация", "программные роботы", "автоматизация рутины", "low-code роботы"],
+    what: "Программные роботы выполняют рутину за человека: переносят данные между системами, формируют отчёты, обрабатывают документы.",
+    pain: "Сотрудники тратят часы на копирование данных между системами, ошибки от усталости, дорогая ручная рутина.",
+    metrics: [{ v: "−70%", l: "трудозатраты на рутину" }, { v: "×24", l: "робот работает без перерыва" }, { v: "0", l: "ошибок ввода" }],
+    vendors: ["ROBIN RPA (SLSoft)", "PIX RPA", "Proceset — IPA (Инфомаксимум)"],
+    related: ["PMIN", "ERP", "AIAG"], client: "Банки, бэк-офисы, ОЦО, любые процессы с рутиной." },
+  { code: "PMIN", label: "Process Mining", zone: "back", pos: { x: 84, y: 83 },
+    name: "Анализ бизнес-процессов",
+    full: "Process Mining & Task Mining",
+    aka: ["Task Mining", "глубинный анализ процессов", "conformance checking", "цифровой двойник процессов"],
+    what: "Восстанавливает реальную карту процессов из логов систем: где узкие места, отклонения от регламента и что автоматизировать.",
+    pain: "Никто не знает, как процессы идут на самом деле: регламенты на бумаге, узкие места невидимы, автоматизируют наугад.",
+    metrics: [{ v: "100%", l: "прозрачность процессов" }, { v: "−25%", l: "длительность процессов" }, { v: "точки", l: "роста под автоматизацию" }],
+    vendors: ["VK Process Mining", "Proceset (Инфомаксимум)", "PIX Процессы"],
+    related: ["RPA", "BI", "ERP"], client: "Закупки, кредитование, документооборот, логистика, ТОиР." },
+  { code: "LMS", label: "LMS", zone: "back", pos: { x: 88, y: 75 },
+    name: "Управление обучением",
+    full: "Learning Management System",
+    aka: ["СДО", "корпоративный университет", "e-learning", "адаптация и аттестация"],
+    what: "Корпоративный университет: курсы, тесты, адаптация новичков и аттестация — всё онлайн, с прогрессом по каждому сотруднику.",
+    pain: "Обучение хаотичное, новички долго входят в роль, знания экспертов уходят вместе с ними, аттестацию не отследить.",
+    metrics: [{ v: "−40%", l: "срок адаптации" }, { v: "×3", l: "охват обучением" }, { v: "+25%", l: "результаты аттестаций" }],
+    vendors: [], related: ["HRM", "KEDO"],
+    client: "Сети, производство, ритейл — компании с массовым персоналом." },
+];
+window.CLASS_BY_CODE = window.CLASSES.reduce((m, c) => { m[c.code] = c; return m; }, {});
+window.classLabel = (c) => (typeof c === "string" ? (window.CLASS_BY_CODE[c] || {}).label || c : c.label || c.code);
+</script>
+
+<!-- Tweaks panel -->
+<script type="text/babel">
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    transform:scale(var(--dc-inv-zoom,1));transform-origin:bottom right;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;
+    background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;min-height:22px;
+    border-radius:6px;cursor:default;padding:4px 6px;line-height:1.2}
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+`;
+
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  const setTweak = React.useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null
+      ? keyOrEdits : { [keyOrEdits]: val };
+    setValues((prev) => ({ ...prev, ...edits }));
+  }, []);
+  return [values, setTweak];
+}
+
+function TweaksPanel({ title = 'Tweaks', children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      else if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel" style={{ right: 16, bottom: 16 }}>
+        <div className="twk-hd">
+          <b>{title}</b>
+          <button className="twk-x" onClick={() => setOpen(false)}>✕</button>
+        </div>
+        <div className="twk-body">{children}</div>
+      </div>
+    </>
+  );
+}
+
+function TweakSection({ label }) {
+  return <div className="twk-sect">{label}</div>;
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  const opts = options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+  const idx = Math.max(0, opts.findIndex((o) => o.value === value));
+  const n = opts.length;
+  return (
+    <div className="twk-row">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <div className="twk-seg">
+        <div className="twk-seg-thumb"
+             style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`,
+                      width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map((o) => (
+          <button key={o.value} type="button" onClick={() => onChange(o.value)}>{o.label}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { useTweaks, TweaksPanel, TweakSection, TweakToggle, TweakRadio });
+</script>
+
+<!-- BuildingMap -->
+<script type="text/babel">
+const { useState: useStateB, useRef: useRefB } = React;
+
+const VB = { w: 1280, h: 842 };
+const BX0 = 240, BX1 = 1040;
+const WALL = 18;
+const ROOF_Y0 = 80, ROOF_H = 54;
+const FLOOR_H = 126;
+const FY0 = ROOF_Y0 + ROOF_H;
+const BY1 = FY0 + 5 * FLOOR_H;
+const GROUND_Y = FY0 + 4 * FLOOR_H;
+const ISO_D = 44;
+
+function floorRect(index) {
+  return { x: BX0, y: FY0 + index * FLOOR_H, w: BX1 - BX0, h: FLOOR_H };
+}
+
+function roomLayout(zoneId, count, floorIndex) {
+  const innerX0 = BX0 + WALL, innerW = (BX1 - WALL) - innerX0;
+  const pad = 16, gap = 12;
+  const roomW = (innerW - 2 * pad - (count - 1) * gap) / count;
+  const fy = FY0 + floorIndex * FLOOR_H;
+  const roomH = FLOOR_H - 30;
+  return (i) => ({
+    x: innerX0 + pad + i * (roomW + gap),
+    y: fy + 15,
+    w: roomW,
+    h: roomH,
+  });
+}
+
+function BuildingMap({ styleId, selectedCode, focusedZone, onSelect, onBackdrop }) {
+  const byFloor = window.FLOOR_ORDER.map((zid) => ({
+    zone: window.ZONES[zid],
+    items: window.CLASSES.filter((c) => c.zone === zid),
+  }));
+
+  let svgScale = 1, originY = 50;
+  if (focusedZone && window.ZONES[focusedZone]) {
+    const fi = window.FLOOR_ORDER.indexOf(focusedZone);
+    const cy = FY0 + fi * FLOOR_H + FLOOR_H / 2;
+    originY = (cy / VB.h) * 100;
+    svgScale = 1.62;
+  }
+
+  return (
+    <svg
+      className={`bmap bmap--${styleId}`}
+      viewBox={`0 0 ${VB.w} ${VB.h}`}
+      preserveAspectRatio="xMidYMid meet"
+      style={{ transform: `scale(${svgScale})`, transformOrigin: `50% ${originY}%`, transition: "transform .66s cubic-bezier(.4,0,.2,1)" }}
+      role="img"
+      aria-label="Интерактивный разрез предприятия"
+    >
+      <defs>
+        <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="10" stdDeviation="14" floodColor="#1B2540" floodOpacity="0.10" />
+        </filter>
+        <filter id="roomShadow" x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="3" stdDeviation="5" floodColor="#1B2540" floodOpacity="0.12" />
+        </filter>
+        <pattern id="bpGrid" width="34" height="34" patternUnits="userSpaceOnUse">
+          <path d="M34 0H0V34" fill="none" stroke="#2E6BFF" strokeOpacity="0.14" strokeWidth="1" />
+        </pattern>
+        <linearGradient id="isoSide" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#C9D4E8" />
+          <stop offset="1" stopColor="#AEBDD6" />
+        </linearGradient>
+        <linearGradient id="isoTop" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#F2F6FD" />
+          <stop offset="1" stopColor="#DCE5F4" />
+        </linearGradient>
+        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#FBFCFE" />
+          <stop offset="1" stopColor="#EEF3FA" />
+        </linearGradient>
+      </defs>
+
+      <rect className="bmap-bg" x="0" y="0" width={VB.w} height={VB.h} />
+      {styleId === "blueprint" && (
+        <rect x="0" y="0" width={VB.w} height={VB.h} fill="url(#bpGrid)" />
+      )}
+      <rect x="0" y="0" width={VB.w} height={VB.h} fill="transparent" onClick={onBackdrop} />
+
+      <g className="bmap-ground">
+        <line x1="60" y1={GROUND_Y} x2={VB.w - 60} y2={GROUND_Y} className="ground-line" />
+        {styleId === "blueprint" && (
+          <text x={VB.w - 64} y={GROUND_Y - 8} className="ground-label" textAnchor="end">─ уровень земли ─</text>
+        )}
+      </g>
+
+      <g className="scene">
+        {styleId === "iso" && (
+          <g className="iso-faces">
+            <polygon points={`${BX0},${ROOF_Y0} ${BX0 + ISO_D},${ROOF_Y0 - ISO_D} ${BX1 + ISO_D},${ROOF_Y0 - ISO_D} ${BX1},${ROOF_Y0}`} fill="url(#isoTop)" />
+            <polygon points={`${BX1},${ROOF_Y0} ${BX1 + ISO_D},${ROOF_Y0 - ISO_D} ${BX1 + ISO_D},${BY1 - ISO_D} ${BX1},${BY1}`} fill="url(#isoSide)" />
+            {window.FLOOR_ORDER.map((_, i) => (
+              <line key={i} x1={BX1} y1={FY0 + i * FLOOR_H} x2={BX1 + ISO_D} y2={FY0 + i * FLOOR_H - ISO_D} stroke="#9FB0CC" strokeWidth="1.2" strokeOpacity="0.7" />
+            ))}
+          </g>
+        )}
+
+        <g className="building-shell" filter={styleId === "iso" ? "url(#softShadow)" : undefined}>
+          <rect className="building-body" x={BX0} y={ROOF_Y0} width={BX1 - BX0} height={BY1 - ROOF_Y0} rx={styleId === "material" ? 14 : 4} />
+          <rect className="building-roof" x={BX0 - 10} y={ROOF_Y0 - 10} width={BX1 - BX0 + 20} height={20} rx="4" />
+          <line className="roof-mast" x1={BX0 + 70} y1={ROOF_Y0 - 10} x2={BX0 + 70} y2={ROOF_Y0 - 46} />
+          <circle className="roof-mast-dot" cx={BX0 + 70} cy={ROOF_Y0 - 50} r="4" />
+        </g>
+
+        {byFloor.map((floor, fi) => {
+          const fr = floorRect(fi);
+          const getRoom = roomLayout(floor.zone.id, floor.items.length, fi);
+          const isBasement = floor.zone.id === "data";
+          return (
+            <g key={floor.zone.id} className={`floor floor--${floor.zone.id} ${isBasement ? "floor--basement" : ""}`}>
+              <rect className="floor-slab" x={fr.x} y={fr.y} width={fr.w} height={fr.h} />
+              {fi > 0 && <line className="floor-divider" x1={fr.x} y1={fr.y} x2={fr.x + fr.w} y2={fr.y} />}
+
+              <g className="floor-tag" transform={`translate(${BX1 + (styleId === "iso" ? ISO_D + 14 : 22)}, ${fr.y + fr.h / 2})`}>
+                <rect className="floor-tag-chip" x="0" y="-13" width="9" height="26" rx="3" style={{ fill: floor.zone.accent }} />
+                <text className="floor-tag-title" x="20" y="-2">{floor.zone.short}</text>
+                <text className="floor-tag-sub" x="20" y="15">{floor.items.length} класса систем</text>
+              </g>
+
+              {floor.items.map((c, i) => {
+                const r = getRoom(i);
+                const active = c.code === selectedCode;
+                return (
+                  <g key={c.code} className={`room ${active ? "room--active" : ""}`}
+                     onClick={(e) => { e.stopPropagation(); onSelect(c.code); }}
+                     style={{ cursor: "pointer" }}>
+                    <rect className="room-box" x={r.x} y={r.y} width={r.w} height={r.h}
+                          rx={styleId === "material" ? 11 : 3}
+                          style={{ "--accent": floor.zone.accent, "--tint": floor.zone.tint }}
+                          filter={styleId === "material" ? "url(#roomShadow)" : undefined} />
+                    {styleId === "material" && (
+                      <rect className="room-strip" x={r.x} y={r.y} width={r.w} height="6" rx="3" style={{ fill: floor.zone.accent }} />
+                    )}
+                    <text className={`room-code ${window.classLabel(c).length > 5 ? "room-code--long" : ""}`}
+                          x={r.x + 14} y={r.y + (styleId === "material" ? 40 : 36)}
+                          style={{ "--accent": floor.zone.accent }}>
+                      {window.classLabel(c)}
+                    </text>
+                    <foreignObject x={r.x + 14} y={r.y + (styleId === "material" ? 48 : 44)} width={r.w - 26} height={r.h - 52}>
+                      <div className="room-name">{c.name}</div>
+                    </foreignObject>
+                    <g className="room-marker" transform={`translate(${r.x + r.w - 18}, ${r.y + 18})`} style={{ "--accent": floor.zone.accent }}>
+                      <circle className="marker-pulse" r="7" />
+                      <circle className="marker-dot" r="5" />
+                    </g>
+                  </g>
+                );
+              })}
+            </g>
+          );
+        })}
+      </g>
+    </svg>
+  );
+}
+
+window.BuildingMap = BuildingMap;
+</script>
+
+<!-- DioramaMap -->
+<script type="text/babel">
+const { useState: useStateD, useRef: useRefD, useEffect: useEffectD, useCallback: useCallbackD } = React;
+
+const MIN_K = 0.7, MAX_K = 4.2, FOCUS_K = 1.85;
+
+function DioramaMap({ selectedCode, focusedZone, onSelect, onBackdrop, pulse }) {
+  const stageRef = useRefD(null);
+  const frameRef = useRefD(null);
+  const [view, setView] = useStateD({ k: 1, x: 0, y: 0 });
+  const [animated, setAnimated] = useStateD(true);
+  const [hoverZone, setHoverZone] = useStateD(null);
+  const viewRef = useRefD(view);
+  viewRef.current = view;
+  const pan = useRefD(null);
+
+  const clampK = (k) => Math.min(MAX_K, Math.max(MIN_K, k));
+
+  useEffectD(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+    if (focusedZone && window.ZONES[focusedZone]) {
+      const z = window.ZONES[focusedZone];
+      const w = frame.offsetWidth, h = frame.offsetHeight;
+      const k = FOCUS_K;
+      const x = -((z.cx / 100 - 0.5) * w) * k;
+      const y = -((z.cy / 100 - 0.5) * h) * k;
+      setAnimated(true);
+      setView({ k, x, y });
+    } else {
+      setAnimated(true);
+      setView({ k: 1, x: 0, y: 0 });
+    }
+  }, [focusedZone]);
+
+  useEffectD(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const onWheel = (e) => {
+      e.preventDefault();
+      const frame = frameRef.current;
+      if (!frame) return;
+      const rect = frame.getBoundingClientRect();
+      const cxScreen = rect.left + rect.width / 2;
+      const cyScreen = rect.top + rect.height / 2;
+      const v = viewRef.current;
+      const factor = Math.exp(-e.deltaY * 0.0014);
+      const k2 = clampK(v.k * factor);
+      const ratio = k2 / v.k;
+      const dx = (e.clientX - cxScreen) * (1 - ratio);
+      const dy = (e.clientY - cyScreen) * (1 - ratio);
+      setAnimated(false);
+      setView({ k: k2, x: v.x + dx, y: v.y + dy });
+    };
+    stage.addEventListener("wheel", onWheel, { passive: false });
+    return () => stage.removeEventListener("wheel", onWheel);
+  }, []);
+
+  const onPointerDown = (e) => {
+    if (e.button === 1 || e.button === 2) {
+      e.preventDefault();
+      const v = viewRef.current;
+      pan.current = { sx: e.clientX, sy: e.clientY, ox: v.x, oy: v.y };
+      setAnimated(false);
+      e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId);
+    }
+  };
+  const onPointerMove = (e) => {
+    if (!pan.current) return;
+    const v = viewRef.current;
+    setView({ k: v.k, x: pan.current.ox + (e.clientX - pan.current.sx), y: pan.current.oy + (e.clientY - pan.current.sy) });
+  };
+  const endPan = () => { pan.current = null; };
+
+  const zoomBy = (mult) => {
+    const v = viewRef.current;
+    const k2 = clampK(v.k * mult);
+    const ratio = k2 / v.k;
+    setAnimated(true);
+    setView({ k: k2, x: v.x * ratio, y: v.y * ratio });
+  };
+  const resetView = (e) => { if (e) e.stopPropagation(); setAnimated(true); setView({ k: 1, x: 0, y: 0 }); };
+
+  const activeZone = focusedZone || hoverZone;
+
+  return (
+    <div className="diorama-stage" ref={stageRef}
+         onClick={onBackdrop}
+         onPointerDown={onPointerDown}
+         onPointerMove={onPointerMove}
+         onPointerUp={endPan}
+         onPointerLeave={endPan}
+         onContextMenu={(e) => e.preventDefault()}
+         style={{ cursor: pan.current ? "grabbing" : "default" }}>
+      <div className="diorama-frame" ref={frameRef}
+           style={{
+             transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})`,
+             transition: animated ? "transform .62s cubic-bezier(.4,0,.2,1)" : "none",
+           }}>
+        <img className="diorama-img" src="assets/diorama.png"
+             alt="Разрез предприятия: цех, склад, дата-центр, офисы" draggable="false" />
+
+        <div className="hotspots">
+          {window.CLASSES.map((c) => {
+            const z = window.ZONES[c.zone];
+            const active = c.code === selectedCode;
+            const dim = activeZone && activeZone !== c.zone;
+            return (
+              <button key={c.code}
+                      className={`hotspot hs--${c.zone} ${active ? "is-active" : ""} ${dim ? "is-dim" : ""} ${pulse ? "" : "no-pulse-hs"}`}
+                      style={{ left: `${c.pos.x}%`, top: `${c.pos.y}%`, "--accent": z.accent }}
+                      onClick={(e) => { e.stopPropagation(); onSelect(c.code); }}
+                      onMouseEnter={() => setHoverZone(c.zone)}
+                      onMouseLeave={() => setHoverZone(null)}
+                      title={`${c.label} — ${c.name}`}>
+                <span className="hs-pin">
+                  <span className="hs-ring" />
+                  <span className="hs-dot" />
+                </span>
+                <span className="hs-label">{c.label}</span>
+                <span className="hs-name">{c.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="zoom-ctrl" onClick={(e) => e.stopPropagation()}>
+        <button className="zc-btn" onClick={() => zoomBy(1.35)} aria-label="Приблизить">＋</button>
+        <button className="zc-btn" onClick={() => zoomBy(1 / 1.35)} aria-label="Отдалить">－</button>
+        <button className="zc-btn zc-reset" onClick={resetView} aria-label="Сбросить вид" title="Сбросить вид">⤢</button>
+      </div>
+
+      <div className="diorama-help" onClick={(e) => e.stopPropagation()}>
+        Колесо — зум · правая/средняя кнопка — перемещение
+      </div>
+
+      <div className="diorama-zonekey">
+        {window.FLOOR_ORDER.map((zid) => {
+          const z = window.ZONES[zid];
+          return (
+            <button key={zid}
+                    className={`zk ${activeZone === zid ? "is-on" : ""}`}
+                    style={{ "--accent": z.accent }}
+                    onMouseEnter={() => setHoverZone(zid)}
+                    onMouseLeave={() => setHoverZone(null)}
+                    onClick={(e) => { e.stopPropagation(); const first = window.CLASSES.find((c) => c.zone === zid); if (first) onSelect(first.code); }}>
+              <span className="zk-dot" />
+              {z.short}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+window.DioramaMap = DioramaMap;
+</script>
+
+<!-- Sidebar -->
+<script type="text/babel">
+function Metric({ v, l }) {
+  return (
+    <div className="metric">
+      <div className="metric-v">{v}</div>
+      <div className="metric-l">{l}</div>
+    </div>
+  );
+}
+
+function Sidebar({ code, onClose, onSelect }) {
+  const open = !!code;
+  const c = code ? window.CLASS_BY_CODE[code] : null;
+  const zone = c ? window.ZONES[c.zone] : null;
+  const L = window.classLabel;
+
+  return (
+    <aside className={`sidebar ${open ? "sidebar--open" : ""}`} aria-hidden={!open}>
+      {c && (
+        <div className="sidebar-inner" key={c.code} style={{ "--accent": zone.accent, "--tint": zone.tint }}>
+          <div className="sb-head">
+            <div className="sb-zone">
+              <span className="sb-zone-dot" />
+              {zone.title}
+            </div>
+            <button className="sb-close" onClick={onClose} aria-label="Закрыть">✕</button>
+          </div>
+
+          <div className="sb-code">{c.label}</div>
+          <h2 className="sb-name">{c.name}</h2>
+          <div className="sb-full">{c.full}</div>
+
+          {c.aka && c.aka.length > 0 && (
+            <div className="sb-aka">
+              <span className="sb-aka-label">Также называют:</span>
+              <span className="sb-aka-chips">
+                {c.aka.map((a, i) => <span key={i} className="aka-chip">{a}</span>)}
+              </span>
+            </div>
+          )}
+
+          <section className="sb-block">
+            <h3 className="sb-h">Что это простыми словами</h3>
+            <p className="sb-p">{c.what}</p>
+          </section>
+
+          <section className="sb-block sb-pain">
+            <h3 className="sb-h">Какую боль решает</h3>
+            <p className="sb-p">{c.pain}</p>
+          </section>
+
+          <section className="sb-block">
+            <h3 className="sb-h">Эффект в цифрах</h3>
+            <div className="metrics">
+              {c.metrics.map((m, i) => <Metric key={i} {...m} />)}
+            </div>
+          </section>
+
+          <section className="sb-block">
+            <h3 className="sb-h">Наши вендоры и продукты</h3>
+            {c.vendors && c.vendors.length > 0 ? (
+              <React.Fragment>
+                <div className="vendors">
+                  {c.vendors.map((v, i) => {
+                    const own = /globus|compo|1с\sглобус|глобус|g-hunt/i.test(v);
+                    return <span key={i} className={`vendor ${own ? "vendor--own" : ""}`}>{v}</span>;
+                  })}
+                </div>
+                <div className="vendors-note">Класс решений ≠ продукт. Подбираем стек под задачу клиента.</div>
+              </React.Fragment>
+            ) : (
+              <div className="vendors-empty">
+                Профильный вендор подбирается под проект — класс в проработке партнёрской сети Globus.
+              </div>
+            )}
+          </section>
+
+          <section className="sb-block">
+            <h3 className="sb-h">Типовой клиент и отрасль</h3>
+            <p className="sb-p sb-client">{c.client}</p>
+          </section>
+
+          {c.related && c.related.length > 0 && (
+            <section className="sb-block">
+              <h3 className="sb-h">Что стоит рядом</h3>
+              <div className="related">
+                {c.related.map((rc) => {
+                  const rel = window.CLASS_BY_CODE[rc];
+                  if (!rel) return null;
+                  const rz = window.ZONES[rel.zone];
+                  return (
+                    <button key={rc} className="related-chip" onClick={() => onSelect(rc)} style={{ "--accent": rz.accent }}>
+                      <span className="related-dot" />
+                      <span className="related-code">{L(rel)}</span>
+                      <span className="related-name">{rel.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+    </aside>
+  );
+}
+
+window.Sidebar = Sidebar;
+</script>
+
+<!-- Glossary -->
+<script type="text/babel">
+const { useState: useStateG, useMemo: useMemoG } = React;
+
+function Glossary({ open, onClose, onSelect, selectedCode }) {
+  const [q, setQ] = useStateG("");
+
+  const list = useMemoG(() => {
+    const norm = (s) => (s || "").toLowerCase();
+    const query = norm(q).trim();
+    const all = [...window.CLASSES].sort((a, b) => a.label.localeCompare(b.label, "ru"));
+    if (!query) return all;
+    return all.filter((c) => {
+      const hay = [c.code, c.label, c.full, c.name, ...(c.aka || [])].map(norm).join(" ");
+      return hay.includes(query);
+    });
+  }, [q]);
+
+  return (
+    <aside className={`glossary ${open ? "glossary--open" : ""}`} aria-hidden={!open}>
+      <div className="gl-inner">
+        <div className="gl-head">
+          <div>
+            <div className="gl-title">Словарь аббревиатур</div>
+            <div className="gl-sub">{window.CLASSES.length} классов ИТ-решений</div>
+          </div>
+          <button className="gl-close" onClick={onClose} aria-label="Закрыть словарь">✕</button>
+        </div>
+
+        <div className="gl-search">
+          <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
+            <line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+          <input type="text" value={q} onChange={(e) => setQ(e.target.value)}
+                 placeholder="EAM, ТОиР, склад, безопасность…" autoComplete="off" />
+          {q && <button className="gl-clear" onClick={() => setQ("")} aria-label="Очистить">✕</button>}
+        </div>
+
+        <div className="gl-count">{list.length === 0 ? "Ничего не найдено" : `Найдено: ${list.length}`}</div>
+
+        <div className="gl-list">
+          {list.map((c) => {
+            const z = window.ZONES[c.zone];
+            return (
+              <button key={c.code}
+                      className={`gl-item ${c.code === selectedCode ? "is-active" : ""}`}
+                      style={{ "--accent": z.accent }}
+                      onClick={() => onSelect(c.code)}>
+                <div className="gl-item-top">
+                  <span className="gl-code">{c.label}</span>
+                  <span className="gl-zone">{z.short}</span>
+                </div>
+                <div className="gl-full">{c.full}</div>
+                <div className="gl-name">{c.name}</div>
+                {c.aka && c.aka.length > 0 && (
+                  <div className="gl-aka">{c.aka.slice(0, 4).join(" · ")}</div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+window.Glossary = Glossary;
+</script>
+
+<!-- App -->
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+function App() {
+  const [t, setTweakState] = useState({ mode: "diorama", pulse: true, autoFocus: true, dark: false });
+  const setTweak = useCallback((key, val) => setTweakState((prev) => ({ ...prev, [key]: val })), []);
+
+  const [selected, setSelected] = useState(null);
+  const [glossaryOpen, setGlossaryOpen] = useState(false);
+
+  const mode = t.mode;
+  const focusedZone = (t.autoFocus && selected) ? window.CLASS_BY_CODE[selected].zone : null;
+
+  const select = useCallback((code) => setSelected(code), []);
+  const close = useCallback(() => setSelected(null), []);
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") { setSelected(null); setGlossaryOpen(false); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  return (
+    <div className={`app ${selected ? "app--panel" : ""} ${glossaryOpen ? "app--gloss" : ""} ${t.pulse ? "" : "no-pulse"} ${t.dark ? "dark" : ""}`}>
+      <header className="topbar">
+        <div className="brand">
+          <img className="brand-logo" src="assets/globus-logo.svg" alt="Globus" />
+          <div className="brand-divider"></div>
+          <div className="brand-text">
+            <div className="brand-sub">Классы IT решений</div>
+          </div>
+        </div>
+
+        <div className="topbar-center">
+          <span className="tb-hint">Кликните на систему, чтобы открыть карточку класса</span>
+        </div>
+
+        <div className="topbar-actions">
+          <div className="style-switch" role="tablist" aria-label="Режим карты">
+            <button role="tab" aria-selected={mode === "diorama"} className={`style-btn ${mode === "diorama" ? "is-active" : ""}`} onClick={() => setTweak("mode", "diorama")}>Диорама</button>
+            <button role="tab" aria-selected={mode === "schema"} className={`style-btn ${mode === "schema" ? "is-active" : ""}`} onClick={() => setTweak("mode", "schema")}>Схема</button>
+          </div>
+          <button className={`gloss-btn ${glossaryOpen ? "is-active" : ""}`}
+                  onClick={() => setGlossaryOpen((v) => !v)}
+                  aria-pressed={glossaryOpen}>
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
+              <line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Словарь
+          </button>
+          <button className="icon-btn" onClick={() => setTweak("dark", !t.dark)}
+                  aria-pressed={t.dark}
+                  title={t.dark ? "Светлая тема" : "Тёмная тема"}
+                  aria-label="Переключить тему">
+            {t.dark ? (
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <circle cx="12" cy="12" r="4.2" fill="currentColor" />
+                <g stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <line x1="12" y1="2.5" x2="12" y2="5" /><line x1="12" y1="19" x2="12" y2="21.5" />
+                  <line x1="2.5" y1="12" x2="5" y2="12" /><line x1="19" y1="12" x2="21.5" y2="12" />
+                  <line x1="5.1" y1="5.1" x2="6.9" y2="6.9" /><line x1="17.1" y1="17.1" x2="18.9" y2="18.9" />
+                  <line x1="18.9" y1="5.1" x2="17.1" y2="6.9" /><line x1="6.9" y1="17.1" x2="5.1" y2="18.9" />
+                </g>
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path d="M20 13.5A8 8 0 1 1 10.5 4a6.4 6.4 0 0 0 9.5 9.5Z" fill="currentColor" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </header>
+
+      <div className="stage-wrap">
+        <Sidebar code={selected} onClose={close} onSelect={select} />
+
+        <main className="stage">
+          {mode === "diorama" ? (
+            <DioramaMap selectedCode={selected} focusedZone={focusedZone} onSelect={select} onBackdrop={close} pulse={t.pulse} />
+          ) : (
+            <BuildingMap styleId="iso" selectedCode={selected} focusedZone={focusedZone} onSelect={select} onBackdrop={close} />
+          )}
+
+          {!selected && mode === "schema" && (
+            <div className="empty-hint">
+              <div className="eh-card">
+                <div className="eh-kicker">22 класса · 5 зон</div>
+                <div className="eh-title">От цеха до дата-центра — в одном здании</div>
+                <div className="eh-text">Каждая «комната» — класс решений, который приносит деньги в конкретном бизнес-процессе.</div>
+              </div>
+            </div>
+          )}
+
+          {selected && (
+            <button className="reset-btn" onClick={close}>↺ Вся карта</button>
+          )}
+        </main>
+
+        <Glossary open={glossaryOpen} onClose={() => setGlossaryOpen(false)} onSelect={select} selectedCode={selected} />
+      </div>
+
+      <TweaksPanel>
+        <TweakSection label="Карта" />
+        <TweakRadio label="Режим" value={t.mode}
+                    options={[{ value: "diorama", label: "Диорама" }, { value: "schema", label: "Схема" }]}
+                    onChange={(v) => setTweak("mode", v)} />
+        <TweakSection label="Поведение" />
+        <TweakToggle label="Тёмный фон" value={t.dark} onChange={(v) => setTweak("dark", v)} />
+        <TweakToggle label="Зум к зоне при клике" value={t.autoFocus} onChange={(v) => setTweak("autoFocus", v)} />
+        <TweakToggle label="Пульсация маркеров" value={t.pulse} onChange={(v) => setTweak("pulse", v)} />
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
