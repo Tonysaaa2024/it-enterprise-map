@@ -491,18 +491,24 @@ function BuildingMap({ styleId, selectedCode, focusedZone, onSelect, onBackdrop 
     items: window.CLASSES.filter((c) => c.zone === zid && c.map !== false),
   }));
 
+  // высота здания и viewBox зависят от числа зон (чтобы низ не обрезался)
+  const N = byFloor.length;
+  const BY1 = FY0 + N * FLOOR_H;
+  const VBH = BY1 + 48;
+  const GROUND_Y = BY1;
+
   let svgScale = 1, originY = 50;
   if (focusedZone && window.ZONES[focusedZone]) {
     const fi = window.FLOOR_ORDER.indexOf(focusedZone);
     const cy = FY0 + fi * FLOOR_H + FLOOR_H / 2;
-    originY = (cy / VB.h) * 100;
+    originY = (cy / VBH) * 100;
     svgScale = 1.62;
   }
 
   return (
     <svg
       className={`bmap bmap--${styleId}`}
-      viewBox={`0 0 ${VB.w} ${VB.h}`}
+      viewBox={`0 0 ${VB.w} ${VBH}`}
       preserveAspectRatio="xMidYMid meet"
       style={{ transform: `scale(${svgScale})`, transformOrigin: `50% ${originY}%`, transition: "transform .66s cubic-bezier(.4,0,.2,1)" }}
       role="img"
@@ -532,11 +538,11 @@ function BuildingMap({ styleId, selectedCode, focusedZone, onSelect, onBackdrop 
         </linearGradient>
       </defs>
 
-      <rect className="bmap-bg" x="0" y="0" width={VB.w} height={VB.h} />
+      <rect className="bmap-bg" x="0" y="0" width={VB.w} height={VBH} />
       {styleId === "blueprint" && (
-        <rect x="0" y="0" width={VB.w} height={VB.h} fill="url(#bpGrid)" />
+        <rect x="0" y="0" width={VB.w} height={VBH} fill="url(#bpGrid)" />
       )}
-      <rect x="0" y="0" width={VB.w} height={VB.h} fill="transparent" onClick={onBackdrop} />
+      <rect x="0" y="0" width={VB.w} height={VBH} fill="transparent" onClick={onBackdrop} />
 
       <g className="bmap-ground">
         <line x1="60" y1={GROUND_Y} x2={VB.w - 60} y2={GROUND_Y} className="ground-line" />
