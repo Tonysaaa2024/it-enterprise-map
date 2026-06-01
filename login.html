@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Вход · Карта ИТ-предприятия</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@600;700;800&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{ --ink:#16203A; --ink-2:#51607A; --ink-3:#8A97AD; --line:#E4E9F2; --primary:#0D41E1; --canvas:#F6F8FB; --panel:#fff; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:"Golos Text",system-ui,sans-serif;color:var(--ink);background:var(--canvas);
+       display:grid;place-items:center;min-height:100%;-webkit-font-smoothing:antialiased}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:36px 34px;width:min(92vw,380px);
+        box-shadow:0 24px 60px -34px rgba(20,32,58,.45)}
+  .logo{height:30px;margin-bottom:22px}
+  h1{font-family:"Onest",sans-serif;font-size:21px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px}
+  p.sub{color:var(--ink-3);font-size:13.5px;margin:0 0 22px;line-height:1.45}
+  label{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin:0 0 7px}
+  input{width:100%;border:1px solid var(--line);border-radius:11px;background:var(--canvas);padding:12px 14px;
+        font-family:inherit;font-size:15px;color:var(--ink);outline:none;transition:.15s}
+  input:focus{border-color:var(--primary);background:#fff}
+  button{margin-top:16px;width:100%;border:0;border-radius:11px;background:var(--primary);color:#fff;
+          font-family:inherit;font-size:15px;font-weight:600;padding:12px 14px;cursor:pointer;transition:.15s}
+  button:hover{filter:brightness(1.06)}
+  button:disabled{opacity:.6;cursor:default}
+  .err{color:#D1453B;font-size:13px;margin-top:13px;min-height:18px}
+  .foot{margin-top:18px;font-size:12px;color:var(--ink-3);text-align:center}
+  .foot a{color:var(--ink-2);text-decoration:none}
+</style>
+</head>
+<body>
+  <form class="card" id="f">
+    <img class="logo" src="assets/globus-logo.svg" alt="Globus" />
+    <h1>Карта ИТ-предприятия</h1>
+    <p class="sub">Доступ к карте классов ИТ-решений. Введите пароль, чтобы продолжить.</p>
+    <label for="pw">Пароль</label>
+    <input id="pw" type="password" autocomplete="current-password" autofocus />
+    <button id="btn" type="submit">Войти</button>
+    <div class="err" id="err"></div>
+    <div class="foot"><a href="/admin.html">Вход для администратора →</a></div>
+  </form>
+<script>
+  var f=document.getElementById("f"), pw=document.getElementById("pw"),
+      btn=document.getElementById("btn"), err=document.getElementById("err");
+  f.addEventListener("submit", function(e){
+    e.preventDefault(); err.textContent=""; btn.disabled=true; btn.textContent="Проверяем…";
+    fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},
+      credentials:"same-origin",body:JSON.stringify({role:"viewer",password:pw.value})})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; }); })
+      .then(function(res){
+        if(res.ok){ location.replace("/"); }
+        else { err.textContent=(res.j&&res.j.error)||"Ошибка входа"; btn.disabled=false; btn.textContent="Войти"; pw.select(); }
+      })
+      .catch(function(){ err.textContent="Сеть недоступна. Попробуйте ещё раз."; btn.disabled=false; btn.textContent="Войти"; });
+  });
+</script>
+</body>
+</html>

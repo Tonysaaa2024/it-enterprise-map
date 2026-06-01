@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Админка · Карта ИТ-предприятия</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@600;700;800&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  :root{ --ink:#16203A; --ink-2:#51607A; --ink-3:#8A97AD; --line:#E4E9F2; --line-2:#EEF2F8;
+         --primary:#0D41E1; --canvas:#F6F8FB; --panel:#fff; --ok:#1F9E6F; --err:#D1453B; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:"Golos Text",system-ui,sans-serif;color:var(--ink);background:var(--canvas);-webkit-font-smoothing:antialiased}
+  #root{min-height:100%}
+  a{color:var(--primary);text-decoration:none}
+
+  /* login */
+  .center{min-height:100vh;display:grid;place-items:center}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:34px;width:min(92vw,380px);box-shadow:0 24px 60px -34px rgba(20,32,58,.45)}
+  .card h1{font-family:"Onest",sans-serif;font-size:20px;margin:0 0 6px}
+  .card p{color:var(--ink-3);font-size:13.5px;margin:0 0 20px}
+
+  /* shell */
+  .topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:16px;height:60px;padding:0 22px;background:var(--panel);border-bottom:1px solid var(--line)}
+  .brand{font-family:"Onest",sans-serif;font-weight:700;font-size:15px}
+  .tabs{display:flex;gap:4px;margin-left:8px}
+  .tab{border:0;background:transparent;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--ink-2);padding:8px 14px;border-radius:9px;cursor:pointer}
+  .tab.active{background:var(--canvas);color:var(--primary)}
+  .spacer{flex:1}
+  .status{font-size:12.5px;font-weight:600}
+  .status.ok{color:var(--ok)} .status.err{color:var(--err)}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 22px 80px}
+
+  .btn{border:0;border-radius:10px;background:var(--primary);color:#fff;font-family:inherit;font-size:13.5px;font-weight:600;padding:10px 16px;cursor:pointer;transition:.15s}
+  .btn:hover{filter:brightness(1.06)} .btn:disabled{opacity:.55;cursor:default}
+  .btn.ghost{background:var(--canvas);color:var(--ink-2);border:1px solid var(--line)}
+  .btn.ghost:hover{color:var(--ink)}
+  .btn.danger{background:#fff;color:var(--err);border:1px solid color-mix(in srgb,var(--err) 40%,#fff)}
+  .btn.sm{padding:7px 11px;font-size:12.5px}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
+  .panel h2{font-family:"Onest",sans-serif;font-size:15px;margin:0 0 4px}
+  .panel .hint{color:var(--ink-3);font-size:12.5px;margin:0 0 16px}
+
+  label.fld{display:block;margin-bottom:14px}
+  label.fld>span{display:block;font-size:11.5px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+  .inp,.ta,.sel{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--canvas);padding:10px 12px;font-family:inherit;font-size:14px;color:var(--ink);outline:none;transition:.15s}
+  .inp:focus,.ta:focus,.sel:focus{border-color:var(--primary);background:#fff}
+  .ta{resize:vertical;min-height:70px;line-height:1.45}
+  .mono{font-family:"JetBrains Mono",monospace}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}
+  .row{display:flex;gap:10px;align-items:center}
+  .color-row{display:flex;align-items:center;gap:10px}
+  input[type=color]{width:44px;height:34px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:2px;cursor:pointer}
+
+  /* classes layout */
+  .cls-layout{display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start}
+  .cls-list{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;max-height:72vh;overflow:auto;position:sticky;top:84px}
+  .cls-item{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;background:transparent;border-radius:9px;padding:9px 10px;cursor:pointer;font-family:inherit}
+  .cls-item:hover{background:var(--canvas)}
+  .cls-item.active{background:color-mix(in srgb,var(--primary) 9%,#fff)}
+  .cls-code{font-family:"JetBrains Mono",monospace;font-weight:700;font-size:12px;color:var(--primary);min-width:62px}
+  .cls-nm{font-size:12.5px;color:var(--ink-2);line-height:1.2}
+  .zdot{width:9px;height:9px;border-radius:3px;flex:0 0 auto}
+  .err-msg{color:var(--err);font-size:13px;margin-top:10px}
+  .ok-msg{color:var(--ok);font-size:13px;margin-top:10px}
+  .zone-card{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  .zone-card h3{font-size:13.5px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+const api = (url, opts) => fetch(url, Object.assign({ credentials: "same-origin", headers: { "Content-Type": "application/json" } }, opts));
+const arrToText = (a) => (a || []).join("\n");
+const textToArr = (t) => String(t || "").split("\n").map(s => s.trim()).filter(Boolean);
+const csvToArr = (t) => String(t || "").split(",").map(s => s.trim()).filter(Boolean);
+
+function Field({ label, value, onChange, area, mono, placeholder, type }) {
+  return (
+    <label className="fld">
+      <span>{label}</span>
+      {area
+        ? <textarea className={"ta" + (mono ? " mono" : "")} value={value || ""} placeholder={placeholder || ""} onChange={e => onChange(e.target.value)} />
+        : <input className={"inp" + (mono ? " mono" : "")} type={type || "text"} value={value == null ? "" : value} placeholder={placeholder || ""} onChange={e => onChange(e.target.value)} />}
+    </label>
+  );
+}
+
+/* ---------- login ---------- */
+function AdminLogin({ onDone }) {
+  const [pw, setPw] = useState(""); const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
+  const submit = (e) => {
+    e.preventDefault(); setErr(""); setBusy(true);
+    api("/api/login", { method: "POST", body: JSON.stringify({ role: "admin", password: pw }) })
+      .then(r => r.json().then(j => ({ ok: r.ok, j })))
+      .then(res => { if (res.ok) onDone(); else { setErr((res.j && res.j.error) || "Ошибка"); setBusy(false); } })
+      .catch(() => { setErr("Сеть недоступна"); setBusy(false); });
+  };
+  return (
+    <div className="center">
+      <form className="card" onSubmit={submit}>
+        <h1>Админка</h1>
+        <p>Введите пароль администратора.</p>
+        <label className="fld"><span>Пароль администратора</span>
+          <input className="inp" type="password" autoFocus value={pw} onChange={e => setPw(e.target.value)} /></label>
+        <button className="btn" style={{ width: "100%" }} disabled={busy}>{busy ? "Проверяем…" : "Войти"}</button>
+        {err && <div className="err-msg">{err}</div>}
+        <div style={{ marginTop: 16, fontSize: 12, color: "var(--ink-3)", textAlign: "center" }}><a href="/login.html">← к обычному входу</a></div>
+      </form>
+    </div>
+  );
+}
+
+/* ---------- header editor ---------- */
+function HeaderEditor({ header, set }) {
+  const h = header || {};
+  const u = (k) => (v) => set(Object.assign({}, h, { [k]: v }));
+  return (
+    <div className="panel">
+      <h2>Шапка и подсказки</h2>
+      <p className="hint">Тексты в верхней панели и подсказка в режиме «Схема».</p>
+      <div className="grid2">
+        <Field label="Подпись у логотипа" value={h.brandSub} onChange={u("brandSub")} />
+        <Field label="Подсказка по центру" value={h.hint} onChange={u("hint")} />
+        <Field label="Схема: надстрочник (кикер)" value={h.emptyKicker} onChange={u("emptyKicker")} />
+        <Field label="Схема: заголовок" value={h.emptyTitle} onChange={u("emptyTitle")} />
+      </div>
+      <Field label="Схема: текст" value={h.emptyText} onChange={u("emptyText")} area />
+    </div>
+  );
+}
+
+/* ---------- zones editor ---------- */
+function ZonesEditor({ zones, order, set }) {
+  const ids = (order && order.length ? order : Object.keys(zones || {}));
+  const upd = (id, key, val) => {
+    const next = Object.assign({}, zones);
+    next[id] = Object.assign({}, next[id], { [key]: key === "cx" || key === "cy" || key === "floor" ? Number(val) : val });
+    set(next);
+  };
+  return (
+    <div className="panel">
+      <h2>Зоны</h2>
+      <p className="hint">Название, короткая метка и цвета каждой зоны. Координаты — центр зоны на диораме (в %) и номер этажа для режима «Схема».</p>
+      {ids.map((id) => {
+        const z = zones[id] || {};
+        return (
+          <div className="zone-card" key={id}>
+            <h3><span className="zdot" style={{ background: z.accent }} /> {z.title || id} <span className="mono" style={{ color: "var(--ink-3)", fontWeight: 400 }}>· {id}</span></h3>
+            <div className="grid2">
+              <Field label="Полное название" value={z.title} onChange={v => upd(id, "title", v)} />
+              <Field label="Короткая метка" value={z.short} onChange={v => upd(id, "short", v)} />
+            </div>
+            <div className="grid3">
+              <label className="fld"><span>Акцентный цвет</span>
+                <div className="color-row"><input type="color" value={z.accent || "#000000"} onChange={e => upd(id, "accent", e.target.value)} />
+                  <input className="inp mono" value={z.accent || ""} onChange={e => upd(id, "accent", e.target.value)} /></div></label>
+              <label className="fld"><span>Фон (tint)</span>
+                <div className="color-row"><input type="color" value={z.tint || "#ffffff"} onChange={e => upd(id, "tint", e.target.value)} />
+                  <input className="inp mono" value={z.tint || ""} onChange={e => upd(id, "tint", e.target.value)} /></div></label>
+              <div />
+            </div>
+            <div className="grid3">
+              <Field label="Центр X, %" type="number" value={z.cx} onChange={v => upd(id, "cx", v)} />
+              <Field label="Центр Y, %" type="number" value={z.cy} onChange={v => upd(id, "cy", v)} />
+              <Field label="Этаж (#)" type="number" value={z.floor} onChange={v => upd(id, "floor", v)} />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ---------- class editor ---------- */
+function newClass(zoneId) {
+  return { code: "NEW" + Math.floor(Math.random() * 1000), label: "NEW", zone: zoneId, pos: { x: 50, y: 50 },
+    name: "Новый класс", full: "", aka: [], what: "", pain: "", metrics: [{ v: "", l: "" }, { v: "", l: "" }, { v: "", l: "" }], vendors: [], related: [], client: "" };
+}
+
+function ClassEditor({ cls, zones, onChange, onDelete }) {
+  const u = (k, v) => onChange(Object.assign({}, cls, { [k]: v }));
+  const upos = (k, v) => onChange(Object.assign({}, cls, { pos: Object.assign({ x: 50, y: 50 }, cls.pos, { [k]: Number(v) }) }));
+  const metrics = (cls.metrics && cls.metrics.length ? cls.metrics : [{ v: "", l: "" }]);
+  const umetric = (i, k, v) => { const m = metrics.map(x => Object.assign({}, x)); while (m.length <= i) m.push({ v: "", l: "" }); m[i][k] = v; u("metrics", m); };
+  return (
+    <div className="panel">
+      <div className="row" style={{ justifyContent: "space-between", marginBottom: 8 }}>
+        <h2 style={{ margin: 0 }}>{cls.label} — {cls.name}</h2>
+        <button className="btn danger sm" onClick={() => { if (confirm("Удалить этот класс?")) onDelete(); }}>Удалить класс</button>
+      </div>
+      <div className="grid3">
+        <Field label="Код (уникальный)" mono value={cls.code} onChange={v => u("code", v)} />
+        <Field label="Метка на карте" mono value={cls.label} onChange={v => u("label", v)} />
+        <label className="fld"><span>Зона</span>
+          <select className="sel" value={cls.zone} onChange={e => u("zone", e.target.value)}>
+            {Object.keys(zones).map(id => <option key={id} value={id}>{zones[id].title}</option>)}
+          </select></label>
+      </div>
+      <Field label="Название" value={cls.name} onChange={v => u("name", v)} />
+      <Field label="Расшифровка аббревиатуры" value={cls.full} onChange={v => u("full", v)} />
+      <Field label="Что это простыми словами" value={cls.what} onChange={v => u("what", v)} area />
+      <Field label="Какую боль решает" value={cls.pain} onChange={v => u("pain", v)} area />
+      <div className="panel" style={{ background: "var(--canvas)", padding: 14 }}>
+        <span style={{ fontSize: 11.5, fontWeight: 600, color: "var(--ink-2)" }}>Эффект в цифрах (3 метрики)</span>
+        {[0, 1, 2].map(i => (
+          <div className="grid2" key={i} style={{ marginTop: 8 }}>
+            <Field label={"Значение " + (i + 1)} value={(metrics[i] || {}).v} onChange={v => umetric(i, "v", v)} />
+            <Field label={"Подпись " + (i + 1)} value={(metrics[i] || {}).l} onChange={v => umetric(i, "l", v)} />
+          </div>
+        ))}
+      </div>
+      <Field label="Также называют (по одному в строке)" value={arrToText(cls.aka)} onChange={v => u("aka", textToArr(v))} area />
+      <Field label="Наши вендоры и продукты (по одному в строке)" value={arrToText(cls.vendors)} onChange={v => u("vendors", textToArr(v))} area />
+      <Field label="Что стоит рядом — коды классов через запятую" mono value={(cls.related || []).join(", ")} onChange={v => u("related", csvToArr(v))} />
+      <Field label="Типовой клиент и отрасль" value={cls.client} onChange={v => u("client", v)} area />
+      <div className="grid2">
+        <Field label="Позиция на диораме X, %" type="number" value={(cls.pos || {}).x} onChange={v => upos("x", v)} />
+        <Field label="Позиция на диораме Y, %" type="number" value={(cls.pos || {}).y} onChange={v => upos("y", v)} />
+      </div>
+    </div>
+  );
+}
+
+function ClassesEditor({ classes, zones, set }) {
+  const [sel, setSel] = useState(0);
+  const cur = classes[sel];
+  const updateCur = (next) => { const arr = classes.slice(); arr[sel] = next; set(arr); };
+  const del = () => { const arr = classes.slice(); arr.splice(sel, 1); set(arr); setSel(Math.max(0, sel - 1)); };
+  const add = () => { const zoneId = Object.keys(zones)[0]; const arr = classes.concat([newClass(zoneId)]); set(arr); setSel(arr.length - 1); };
+  return (
+    <div className="cls-layout">
+      <div className="cls-list">
+        <button className="btn sm" style={{ width: "100%", marginBottom: 8 }} onClick={add}>+ Добавить класс</button>
+        {classes.map((c, i) => (
+          <button key={i} className={"cls-item" + (i === sel ? " active" : "")} onClick={() => setSel(i)}>
+            <span className="zdot" style={{ background: (zones[c.zone] || {}).accent || "#ccc" }} />
+            <span className="cls-code">{c.label}</span>
+            <span className="cls-nm">{c.name}</span>
+          </button>
+        ))}
+      </div>
+      <div>{cur ? <ClassEditor cls={cur} zones={zones} onChange={updateCur} onDelete={del} /> : <div className="panel">Нет классов. Добавьте первый.</div>}</div>
+    </div>
+  );
+}
+
+/* ---------- passwords ---------- */
+function PasswordsEditor() {
+  const [vp, setVp] = useState(""); const [ap, setAp] = useState("");
+  const [msg, setMsg] = useState(null);
+  const change = (target, value, clear) => {
+    setMsg(null);
+    api("/api/password", { method: "POST", body: JSON.stringify({ target, password: value }) })
+      .then(r => r.json().then(j => ({ ok: r.ok, j })))
+      .then(res => { setMsg(res.ok ? { ok: true, t: "Пароль обновлён." } : { ok: false, t: (res.j && res.j.error) || "Ошибка" }); if (res.ok) clear(); })
+      .catch(() => setMsg({ ok: false, t: "Сеть недоступна" }));
+  };
+  return (
+    <div className="panel">
+      <h2>Доступ и пароли</h2>
+      <p className="hint">Пароль для входа на сайт (зрители) и пароль администратора. Хранятся в зашифрованном виде.</p>
+      <div className="grid2">
+        <div>
+          <Field label="Новый пароль для входа на сайт" value={vp} onChange={setVp} placeholder="мин. 4 символа" />
+          <button className="btn sm" disabled={vp.length < 4} onClick={() => change("viewer", vp, () => setVp(""))}>Сменить пароль сайта</button>
+        </div>
+        <div>
+          <Field label="Новый пароль администратора" value={ap} onChange={setAp} placeholder="мин. 4 символа" />
+          <button className="btn sm" disabled={ap.length < 4} onClick={() => change("admin", ap, () => setAp(""))}>Сменить пароль админа</button>
+        </div>
+      </div>
+      {msg && <div className={msg.ok ? "ok-msg" : "err-msg"}>{msg.t}</div>}
+    </div>
+  );
+}
+
+/* ---------- shell ---------- */
+function AdminApp() {
+  const [content, setContent] = useState(null);
+  const [tab, setTab] = useState("classes");
+  const [status, setStatus] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => { api("/api/content").then(r => r.json()).then(setContent).catch(() => setStatus({ err: true, t: "Не удалось загрузить контент" })); }, []);
+
+  const save = () => {
+    setBusy(true); setStatus(null);
+    api("/api/content", { method: "POST", body: JSON.stringify(content) })
+      .then(r => r.json().then(j => ({ ok: r.ok, j })))
+      .then(res => { setStatus(res.ok ? { t: "Сохранено ✓" } : { err: true, t: (res.j && res.j.error) || "Ошибка сохранения" }); setBusy(false); })
+      .catch(() => { setStatus({ err: true, t: "Сеть недоступна" }); setBusy(false); });
+  };
+  const logout = () => { api("/api/logout", { method: "POST" }).then(() => location.reload()); };
+
+  if (!content) return <div className="center"><div style={{ color: "var(--ink-3)" }}>Загрузка…</div></div>;
+
+  const setKey = (k) => (v) => setContent(Object.assign({}, content, { [k]: v }));
+
+  return (
+    <div>
+      <div className="topbar">
+        <div className="brand">Globus IT · Админка</div>
+        <div className="tabs">
+          {[["classes", "Классы"], ["zones", "Зоны"], ["header", "Шапка"], ["pw", "Доступ"]].map(([k, l]) =>
+            <button key={k} className={"tab" + (tab === k ? " active" : "")} onClick={() => setTab(k)}>{l}</button>)}
+        </div>
+        <div className="spacer" />
+        {status && <span className={"status " + (status.err ? "err" : "ok")}>{status.t}</span>}
+        <a className="btn ghost sm" href="/" target="_blank" rel="noopener">Открыть карту ↗</a>
+        {tab !== "pw" && <button className="btn" disabled={busy} onClick={save}>{busy ? "Сохраняем…" : "Сохранить"}</button>}
+        <button className="btn ghost sm" onClick={logout}>Выйти</button>
+      </div>
+      <div className="wrap">
+        {tab === "classes" && <ClassesEditor classes={content.classes} zones={content.zones} set={setKey("classes")} />}
+        {tab === "zones" && <ZonesEditor zones={content.zones} order={content.floorOrder} set={setKey("zones")} />}
+        {tab === "header" && <HeaderEditor header={content.header} set={setKey("header")} />}
+        {tab === "pw" && <PasswordsEditor />}
+      </div>
+    </div>
+  );
+}
+
+function Root() {
+  const [state, setState] = useState("loading"); // loading | login | admin
+  const check = useCallback(() => {
+    api("/api/session").then(r => r.json()).then(s => setState(s.admin ? "admin" : "login")).catch(() => setState("login"));
+  }, []);
+  useEffect(check, [check]);
+  if (state === "loading") return <div className="center"><div style={{ color: "var(--ink-3)" }}>Загрузка…</div></div>;
+  if (state === "login") return <AdminLogin onDone={() => setState("admin")} />;
+  return <AdminApp />;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Root />);
+</script>
+</body>
+</html>
