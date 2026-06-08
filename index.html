@@ -972,10 +972,10 @@ function Glossary({ open, onClose, onSelect, selectedCode }) {
       <div className="gl-inner">
         <div className="gl-head">
           <div>
-            <div className="gl-title">Словарь аббревиатур</div>
+            <div className="gl-title">Поиск решений</div>
             <div className="gl-sub">{window.CLASSES.length} классов ИТ-решений</div>
           </div>
-          <button className="gl-close" onClick={onClose} aria-label="Закрыть словарь">✕</button>
+          <button className="gl-close" onClick={onClose} aria-label="Закрыть поиск">✕</button>
         </div>
 
         <div className="gl-search">
@@ -1113,7 +1113,7 @@ function App() {
               <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
               <line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
-            Словарь
+            Поиск
           </button>
           <button className="icon-btn" onClick={() => setTweak("dark", !t.dark)}
                   aria-pressed={t.dark}
