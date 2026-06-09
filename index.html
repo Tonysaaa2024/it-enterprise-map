@@ -49,20 +49,21 @@ body{
 .pyramid-btn{margin-left:10px;width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);border-radius:9px;cursor:pointer;transition:.15s;flex:0 0 auto}
 .pyramid-btn:hover{color:var(--primary);border-color:var(--primary)}
 
-/* артефакты (О компании / пирамида) */
-.artifact-backdrop{position:fixed;inset:0;z-index:200;background:rgba(11,16,32,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:grid;place-items:center;padding:24px;animation:afFade .2s ease both}
+/* артефакты (О компании / пирамида) — на весь экран */
+.artifact-backdrop{position:fixed;inset:0;z-index:200;background:#0E1118;display:grid;place-items:center;padding:0;animation:afFade .2s ease both}
 @keyframes afFade{from{opacity:0}to{opacity:1}}
-.artifact-box{position:relative;background:var(--panel);border-radius:16px;box-shadow:0 30px 90px -34px rgba(0,0,0,.65);max-width:min(1180px,95vw);max-height:93vh;overflow:hidden}
-.artifact-close{position:absolute;top:10px;right:10px;z-index:5;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.94);color:#16203A;font-size:15px;cursor:pointer}
+.artifact-box{position:relative;background:#0E1118;border-radius:0;width:100vw;height:100vh;max-width:100vw;max-height:100vh;overflow:hidden}
+.artifact-close{position:fixed;top:14px;right:16px;z-index:6;width:42px;height:42px;border-radius:11px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.94);color:#16203A;font-size:17px;cursor:pointer;box-shadow:0 6px 20px -8px rgba(0,0,0,.5)}
 .artifact-close:hover{background:#fff}
-.artifact-still img{display:block;max-width:min(1180px,95vw);max-height:93vh;width:auto;height:auto}
-.artifact-zoom{position:relative;width:min(1180px,95vw);height:min(80vh,680px);overflow:hidden;display:grid;place-items:center;background:#0E1118;touch-action:none}
+.artifact-still{width:100vw;height:100vh;display:grid;place-items:center;background:#0E1118}
+.artifact-still img{display:block;max-width:100vw;max-height:100vh;width:auto;height:auto}
+.artifact-zoom{position:relative;width:100vw;height:100vh;overflow:hidden;display:grid;place-items:center;background:#0E1118;touch-action:none}
 .artifact-zoom>div{will-change:transform}
-.artifact-zoom img{display:block;max-width:100%;max-height:80vh;width:auto;height:auto;user-select:none;-webkit-user-drag:none}
-.artifact-zoomctrl{position:absolute;left:14px;top:14px;display:flex;flex-direction:column;gap:6px;z-index:4}
-.artifact-zoomctrl button{width:36px;height:36px;border:1px solid var(--line);background:rgba(255,255,255,.95);border-radius:9px;font-size:17px;line-height:1;cursor:pointer;color:#16203A}
+.artifact-zoom img{display:block;max-width:100vw;max-height:100vh;width:auto;height:auto;user-select:none;-webkit-user-drag:none}
+.artifact-zoomctrl{position:fixed;left:16px;top:14px;display:flex;flex-direction:column;gap:6px;z-index:6}
+.artifact-zoomctrl button{width:40px;height:40px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.95);border-radius:10px;font-size:18px;line-height:1;cursor:pointer;color:#16203A;box-shadow:0 6px 20px -8px rgba(0,0,0,.5)}
 .artifact-zoomctrl button:hover{border-color:var(--primary);color:var(--primary)}
-.artifact-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:11.5px;color:#fff;background:rgba(14,17,24,.6);border-radius:20px;padding:5px 13px;z-index:4;white-space:nowrap}
+.artifact-hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);font-size:12px;color:#fff;background:rgba(255,255,255,.14);border-radius:20px;padding:6px 15px;z-index:6;white-space:nowrap}
 .topbar-center{flex:1;display:flex;justify-content:center}
 .tb-hint{font-size:12.5px;color:var(--ink-3)}
 
