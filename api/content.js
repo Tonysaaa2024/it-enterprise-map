@@ -1,6 +1,6 @@
 /* GET  /api/content — текущий контент (нужна сессия зрителя/админа).
    POST /api/content — сохранить контент (только админ). */
-const { getContent, setContent } = require("../lib/store");
+const { getContent, setContent, getVendorLinks } = require("../lib/store");
 const { sessionFrom } = require("../lib/auth");
 
 module.exports = async (req, res) => {
@@ -10,8 +10,10 @@ module.exports = async (req, res) => {
     if (!s.viewer) return res.status(401).json({ error: "unauthorized" });
     try {
       const c = await getContent();
+      let vendorLinks = {};
+      try { vendorLinks = await getVendorLinks(); } catch (_) {}
       res.setHeader("Cache-Control", "no-store");
-      return res.status(200).json(c);
+      return res.status(200).json(Object.assign({}, c, { vendorLinks }));
     } catch (e) {
       return res.status(500).json({ error: "store_error", detail: String(e && e.message || e) });
     }

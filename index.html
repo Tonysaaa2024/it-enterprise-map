@@ -110,6 +110,9 @@ body{
 .vendors{display:flex;flex-wrap:wrap;gap:7px}
 .vendor{font-size:13px;font-weight:500;color:var(--ink);background:var(--canvas);border:1px solid var(--line);padding:6px 11px;border-radius:8px}
 .vendor--own{background:color-mix(in srgb,var(--primary) 10%,#fff);border-color:color-mix(in srgb,var(--primary) 28%,#fff);color:#1f4fc4;font-weight:600}
+a.vendor{text-decoration:none;cursor:pointer}
+a.vendor.vendor--link:hover{border-color:var(--primary);color:var(--primary);background:color-mix(in srgb,var(--primary) 6%,#fff)}
+.vendor-ext{margin-left:5px;font-size:10px;opacity:.6;vertical-align:1px}
 .vendors-note{font-size:11.5px;color:var(--ink-3);margin-top:9px;font-style:italic}
 .vendors-empty{font-size:13px;color:var(--ink-2);line-height:1.5;background:var(--canvas);border:1px dashed var(--line);border-radius:10px;padding:12px 14px}
 
@@ -904,7 +907,11 @@ function Sidebar({ code, onClose, onSelect }) {
                 <div className="vendors">
                   {c.vendors.map((v, i) => {
                     const own = /globus|compo|1с\sглобус|глобус|g-hunt/i.test(v);
-                    return <span key={i} className={`vendor ${own ? "vendor--own" : ""}`}>{v}</span>;
+                    const url = (window.VENDOR_LINKS || {})[v];
+                    const cls = `vendor ${own ? "vendor--own" : ""} ${url ? "vendor--link" : ""}`;
+                    return url
+                      ? <a key={i} className={cls} href={url} target="_blank" rel="noopener noreferrer">{v}<span className="vendor-ext" aria-hidden="true">↗</span></a>
+                      : <span key={i} className={cls}>{v}</span>;
                   })}
                 </div>
                 <div className="vendors-note">Класс решений ≠ продукт. Подбираем стек под задачу клиента.</div>
@@ -1187,6 +1194,7 @@ function App() {
     .then(function (data) {
       window.ZONES = data.zones; window.FLOOR_ORDER = data.floorOrder; window.CLASSES = data.classes;
       window.HEADER = data.header || {};
+      window.VENDOR_LINKS = data.vendorLinks || {};
       window.CLASS_BY_CODE = window.CLASSES.reduce(function (m, c) { m[c.code] = c; return m; }, {});
       window.classLabel = function (c) { return (typeof c === "string" ? (window.CLASS_BY_CODE[c] || {}).label || c : c.label || c.code); };
       ReactDOM.createRoot(document.getElementById("root")).render(<App />);
