@@ -44,6 +44,25 @@ body{
 .brand-divider{width:1px;height:28px;background:var(--line)}
 .brand-text{line-height:1.05}
 .brand-sub{font-family:var(--font-disp);font-size:13.5px;font-weight:600;color:var(--ink);letter-spacing:-.005em}
+.brand-sub-btn{border:0;background:none;padding:0;cursor:pointer}
+.brand-sub-btn:hover{color:var(--primary);text-decoration:underline}
+.pyramid-btn{margin-left:10px;width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--line);background:var(--panel);color:var(--ink-2);border-radius:9px;cursor:pointer;transition:.15s;flex:0 0 auto}
+.pyramid-btn:hover{color:var(--primary);border-color:var(--primary)}
+
+/* артефакты (О компании / пирамида) */
+.artifact-backdrop{position:fixed;inset:0;z-index:200;background:rgba(11,16,32,.62);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:grid;place-items:center;padding:24px;animation:afFade .2s ease both}
+@keyframes afFade{from{opacity:0}to{opacity:1}}
+.artifact-box{position:relative;background:var(--panel);border-radius:16px;box-shadow:0 30px 90px -34px rgba(0,0,0,.65);max-width:min(1180px,95vw);max-height:93vh;overflow:hidden}
+.artifact-close{position:absolute;top:10px;right:10px;z-index:5;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.94);color:#16203A;font-size:15px;cursor:pointer}
+.artifact-close:hover{background:#fff}
+.artifact-still img{display:block;max-width:min(1180px,95vw);max-height:93vh;width:auto;height:auto}
+.artifact-zoom{position:relative;width:min(1180px,95vw);height:min(80vh,680px);overflow:hidden;display:grid;place-items:center;background:#0E1118;touch-action:none}
+.artifact-zoom>div{will-change:transform}
+.artifact-zoom img{display:block;max-width:100%;max-height:80vh;width:auto;height:auto;user-select:none;-webkit-user-drag:none}
+.artifact-zoomctrl{position:absolute;left:14px;top:14px;display:flex;flex-direction:column;gap:6px;z-index:4}
+.artifact-zoomctrl button{width:36px;height:36px;border:1px solid var(--line);background:rgba(255,255,255,.95);border-radius:9px;font-size:17px;line-height:1;cursor:pointer;color:#16203A}
+.artifact-zoomctrl button:hover{border-color:var(--primary);color:var(--primary)}
+.artifact-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:11.5px;color:#fff;background:rgba(14,17,24,.6);border-radius:20px;padding:5px 13px;z-index:4;white-space:nowrap}
 .topbar-center{flex:1;display:flex;justify-content:center}
 .tb-hint{font-size:12.5px;color:var(--ink-3)}
 
@@ -1030,6 +1049,77 @@ window.Glossary = Glossary;
 <script type="text/babel">
 const { useState, useEffect, useCallback } = React;
 
+// Артефакт-окно: «О компании» (статичный слайд) и «Пирамида» (зум как в диораме)
+function Artifact({ overlay, onClose }) {
+  const [v, setV] = React.useState({ k: 1, x: 0, y: 0 });
+  const [anim, setAnim] = React.useState(true);
+  const wrapRef = React.useRef(null);
+  const innerRef = React.useRef(null);
+  const panRef = React.useRef(null);
+  const clamp = (k) => Math.min(6, Math.max(1, k));
+
+  React.useEffect(() => { setAnim(true); setV({ k: 1, x: 0, y: 0 }); }, [overlay]);
+
+  React.useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || overlay !== "pyramid") return;
+    const onWheel = (e) => {
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+      setAnim(false);
+      setV((c) => {
+        const k2 = clamp(c.k * Math.exp(-e.deltaY * 0.0015));
+        const ratio = k2 / c.k;
+        return { k: k2, x: c.x + (e.clientX - cx) * (1 - ratio), y: c.y + (e.clientY - cy) * (1 - ratio) };
+      });
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [overlay]);
+
+  if (!overlay) return null;
+  const isPyr = overlay === "pyramid";
+  const onDown = (e) => {
+    if (!isPyr) return;
+    e.preventDefault();
+    panRef.current = { sx: e.clientX, sy: e.clientY, ox: v.x, oy: v.y };
+    setAnim(false);
+  };
+  const onMove = (e) => {
+    if (!panRef.current) return;
+    setV((c) => ({ k: c.k, x: panRef.current.ox + (e.clientX - panRef.current.sx), y: panRef.current.oy + (e.clientY - panRef.current.sy) }));
+  };
+  const endPan = () => { panRef.current = null; };
+  const zoom = (m) => setV((c) => { const k2 = clamp(c.k * m); const ratio = k2 / c.k; setAnim(true); return { k: k2, x: c.x * ratio, y: c.y * ratio }; });
+  const reset = () => { setAnim(true); setV({ k: 1, x: 0, y: 0 }); };
+
+  return (
+    <div className="artifact-backdrop" onClick={onClose} onContextMenu={(e) => e.preventDefault()}>
+      <div className={`artifact-box ${isPyr ? "artifact-box--pyr" : ""}`} onClick={(e) => e.stopPropagation()}>
+        <button className="artifact-close" onClick={onClose} aria-label="Закрыть">✕</button>
+        {isPyr ? (
+          <div className="artifact-zoom" ref={wrapRef}
+               onPointerDown={onDown} onPointerMove={onMove} onPointerUp={endPan} onPointerLeave={endPan}
+               style={{ cursor: panRef.current ? "grabbing" : "grab" }}>
+            <div ref={innerRef} style={{ transform: `translate(${v.x}px, ${v.y}px) scale(${v.k})`, transition: anim ? "transform .35s cubic-bezier(.4,0,.2,1)" : "none" }}>
+              <img src="assets/pyramid.jpg" alt="ИТ-архитектура предприятия — пирамида" draggable="false" />
+            </div>
+            <div className="artifact-zoomctrl" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+              <button onClick={() => zoom(1.35)} aria-label="Приблизить">＋</button>
+              <button onClick={() => zoom(1 / 1.35)} aria-label="Отдалить">－</button>
+              <button onClick={reset} title="Сбросить" aria-label="Сбросить">⤢</button>
+            </div>
+            <div className="artifact-hint">Колесо — зум · перетаскивание — перемещение</div>
+          </div>
+        ) : (
+          <div className="artifact-still"><img src="assets/about.jpg" alt="О компании Globus" /></div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [t, setTweakState] = useState({ mode: "diorama", pulse: true, autoFocus: true, dark: false });
   const setTweak = useCallback((key, val) => setTweakState((prev) => ({ ...prev, [key]: val })), []);
@@ -1073,8 +1163,11 @@ function App() {
   };
   const cancelEdit = () => { setPosOv({}); setDirty(false); setEditMode(false); };
 
+  // артефакты: "about" (слайд «О компании») и "pyramid" (зумируемая пирамида)
+  const [overlay, setOverlay] = useState(null);
+
   useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") { setSelected(null); setGlossaryOpen(false); } };
+    const onKey = (e) => { if (e.key === "Escape") { setSelected(null); setGlossaryOpen(false); setOverlay(null); } };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
@@ -1086,8 +1179,14 @@ function App() {
           <img className="brand-logo" src="assets/globus-logo.svg" alt="Globus" />
           <div className="brand-divider"></div>
           <div className="brand-text">
-            <div className="brand-sub">{(window.HEADER||{}).brandSub}</div>
+            <button className="brand-sub brand-sub-btn" onClick={() => setOverlay("about")} title="О компании">{(window.HEADER||{}).brandSub}</button>
           </div>
+          <button className="pyramid-btn" onClick={() => setOverlay("pyramid")} title="ИТ-архитектура предприятия (пирамида)" aria-label="Открыть пирамиду ИТ-архитектуры">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M12 3 L22 20 H2 Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+              <path d="M7.2 12 H16.8 M9.4 7.5 H14.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
         </div>
 
         <div className="topbar-center">
@@ -1184,6 +1283,8 @@ function App() {
         <TweakToggle label="Зум к зоне при клике" value={t.autoFocus} onChange={(v) => setTweak("autoFocus", v)} />
         <TweakToggle label="Пульсация маркеров" value={t.pulse} onChange={(v) => setTweak("pulse", v)} />
       </TweaksPanel>
+
+      <Artifact overlay={overlay} onClose={() => setOverlay(null)} />
     </div>
   );
 }
