@@ -355,13 +355,24 @@ a.vendor.vendor--link:hover{border-color:var(--primary);color:var(--primary);bac
 
 <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+<script>
+  // Force Babel's CLASSIC JSX runtime (React.createElement) instead of the
+  // "automatic" runtime. The automatic runtime injects `import { jsx } from
+  // "react/jsx-runtime"` into every compiled block, but these run as classic
+  // <script> tags with no bundler/import map, so the browser throws
+  // "Cannot use import statement outside a module" and the app never mounts.
+  // Classic runtime uses the global React loaded above (UMD) — no imports.
+  Babel.registerPreset('react-classic', {
+    presets: [[Babel.availablePresets['react'], { runtime: 'classic' }]],
+  });
+</script>
 
 <!-- Data layer -->
 <script>/* Контент загружается с /api/content при старте (см. финальный скрипт). */</script>
 
 <!-- Tweaks panel -->
-<script type="text/babel">
+<script type="text/babel" data-presets="react-classic">
 const __TWEAKS_STYLE = `
   .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
     max-height:calc(100vh - 32px);display:flex;flex-direction:column;
@@ -477,7 +488,7 @@ Object.assign(window, { useTweaks, TweaksPanel, TweakSection, TweakToggle, Tweak
 </script>
 
 <!-- BuildingMap -->
-<script type="text/babel">
+<script type="text/babel" data-presets="react-classic">
 const { useState: useStateB, useRef: useRefB } = React;
 
 const VB = { w: 1280, h: 842 };
@@ -648,7 +659,7 @@ window.BuildingMap = BuildingMap;
 </script>
 
 <!-- DioramaMap -->
-<script type="text/babel">
+<script type="text/babel" data-presets="react-classic">
 const { useState: useStateD, useRef: useRefD, useEffect: useEffectD, useCallback: useCallbackD } = React;
 
 const MIN_K = 0.7, MAX_K = 4.2, FOCUS_K = 1.85;
@@ -862,7 +873,7 @@ window.DioramaMap = DioramaMap;
 </script>
 
 <!-- Sidebar -->
-<script type="text/babel">
+<script type="text/babel" data-presets="react-classic">
 function Metric({ v, l }) {
   return (
     <div className="metric">
@@ -977,7 +988,7 @@ window.Sidebar = Sidebar;
 </script>
 
 <!-- Glossary -->
-<script type="text/babel">
+<script type="text/babel" data-presets="react-classic">
 const { useState: useStateG, useMemo: useMemoG } = React;
 
 function Glossary({ open, onClose, onSelect, selectedCode }) {
@@ -1047,7 +1058,7 @@ window.Glossary = Glossary;
 </script>
 
 <!-- App -->
-<script type="text/babel">
+<script type="text/babel" data-presets="react-classic">
 const { useState, useEffect, useCallback } = React;
 
 // Артефакт-окно: «О компании» (статичный слайд) и «Пирамида» (зум как в диораме)
