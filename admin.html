@@ -9,7 +9,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@600;700;800&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+<script>
+  // Классический JSX-runtime: иначе Babel вставляет import "react/jsx-runtime"
+  // в text/babel-блок, он падает с "Cannot use import statement outside a module"
+  // и админка не монтируется (белый экран). Использует глобальный UMD React.
+  Babel.registerPreset('react-classic', {
+    presets: [[Babel.availablePresets['react'], { runtime: 'classic' }]],
+  });
+</script>
 <style>
   :root{ --ink:#16203A; --ink-2:#51607A; --ink-3:#8A97AD; --line:#E4E9F2; --line-2:#EEF2F8;
          --primary:#0D41E1; --canvas:#F6F8FB; --panel:#fff; --ok:#1F9E6F; --err:#D1453B; }
@@ -76,7 +84,7 @@
 </head>
 <body>
 <div id="root"></div>
-<script type="text/babel">
+<script type="text/babel" data-presets="react-classic">
 const { useState, useEffect, useCallback } = React;
 const api = (url, opts) => fetch(url, Object.assign({ credentials: "same-origin", headers: { "Content-Type": "application/json" } }, opts));
 const arrToText = (a) => (a || []).join("\n");
@@ -271,11 +279,11 @@ function PasswordsEditor() {
       <div className="grid2">
         <div>
           <Field label="Новый пароль для входа на сайт" value={vp} onChange={setVp} placeholder="мин. 4 символа" />
-          <button className="btn sm" disabled={vp.length < 4} onClick={() => change("viewer", vp, () => setVp(""))}>Сменить пароль сайта</button>
+          <button className="btn sm" disabled={vp.length < 8} onClick={() => change("viewer", vp, () => setVp(""))}>Сменить пароль сайта</button>
         </div>
         <div>
           <Field label="Новый пароль администратора" value={ap} onChange={setAp} placeholder="мин. 4 символа" />
-          <button className="btn sm" disabled={ap.length < 4} onClick={() => change("admin", ap, () => setAp(""))}>Сменить пароль админа</button>
+          <button className="btn sm" disabled={ap.length < 8} onClick={() => change("admin", ap, () => setAp(""))}>Сменить пароль админа</button>
         </div>
       </div>
       {msg && <div className={msg.ok ? "ok-msg" : "err-msg"}>{msg.t}</div>}
