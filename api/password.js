@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
 
   const { target, password } = req.body || {};
   if (target !== "viewer" && target !== "admin") return res.status(400).json({ error: "Неизвестный тип пароля" });
-  if (!password || String(password).length < 4) return res.status(400).json({ error: "Пароль слишком короткий (мин. 4 символа)" });
+  if (!password || String(password).length < 8) return res.status(400).json({ error: "Пароль слишком короткий (мин. 8 символов)" });
 
   try {
     const auth = await getAuth();
