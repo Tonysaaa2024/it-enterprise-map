@@ -91,6 +91,41 @@ const arrToText = (a) => (a || []).join("\n");
 const textToArr = (t) => String(t || "").split("\n").map(s => s.trim()).filter(Boolean);
 const csvToArr = (t) => String(t || "").split(",").map(s => s.trim()).filter(Boolean);
 
+/* ---------- экспорт классов → один .txt ---------- */
+const expStr = (v) => (v == null ? "" : String(v)).trim();
+const fmtTextField = (label, v) => label + ": " + (expStr(v) || "—");
+const fmtListField = (label, arr) => {
+  const items = (arr || []).map(expStr).filter(Boolean);
+  return items.length ? label + ":\n" + items.map(s => "  - " + s).join("\n") : label + ": —";
+};
+function classToTxt(c) {
+  const title = (c.label || c.code || "") + " — " + expStr(c.name);
+  return [
+    title,
+    "=".repeat(Math.max(3, title.length)),
+    "",
+    fmtTextField("Название", c.name),
+    fmtTextField("Расшифровка аббревиатуры", c.full),
+    fmtTextField("Что это простыми словами", c.what),
+    fmtTextField("Какую боль решает", c.pain),
+    fmtListField("Также называют", c.aka),
+    fmtListField("Наши вендоры и продукты", c.vendors),
+  ].join("\n");
+}
+const buildClassesTxt = (classes) => (classes || []).map(classToTxt).join("\n\n\n") + "\n";
+function downloadText(filename, text) {
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+function exportStamp() {
+  const d = new Date(), p = (n) => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate());
+}
+
 function Field({ label, value, onChange, area, mono, placeholder, type }) {
   return (
     <label className="fld">
@@ -194,7 +229,7 @@ function newClass(zoneId) {
     name: "Новый класс", full: "", aka: [], what: "", pain: "", metrics: [{ v: "", l: "" }, { v: "", l: "" }, { v: "", l: "" }], vendors: [], related: [], client: "" };
 }
 
-function ClassEditor({ cls, zones, onChange, onDelete }) {
+function ClassEditor({ cls, zones, onChange, onDelete, onExport }) {
   const u = (k, v) => onChange(Object.assign({}, cls, { [k]: v }));
   const upos = (k, v) => onChange(Object.assign({}, cls, { pos: Object.assign({ x: 50, y: 50 }, cls.pos, { [k]: Number(v) }) }));
   const metrics = (cls.metrics && cls.metrics.length ? cls.metrics : [{ v: "", l: "" }]);
@@ -203,7 +238,11 @@ function ClassEditor({ cls, zones, onChange, onDelete }) {
     <div className="panel">
       <div className="row" style={{ justifyContent: "space-between", marginBottom: 8 }}>
         <h2 style={{ margin: 0 }}>{cls.label} — {cls.name}</h2>
-        <button className="btn danger sm" onClick={() => { if (confirm("Удалить этот класс?")) onDelete(); }}>Удалить класс</button>
+        <div className="row">
+          <button className="btn ghost sm" onClick={onExport}
+            title="Скачать все классы (название, расшифровка, описание, боль, синонимы, вендоры) в один .txt">Экспорт .txt</button>
+          <button className="btn danger sm" onClick={() => { if (confirm("Удалить этот класс?")) onDelete(); }}>Удалить класс</button>
+        </div>
       </div>
       <div className="grid3">
         <Field label="Код (уникальный)" mono value={cls.code} onChange={v => u("code", v)} />
@@ -244,6 +283,7 @@ function ClassesEditor({ classes, zones, set }) {
   const updateCur = (next) => { const arr = classes.slice(); arr[sel] = next; set(arr); };
   const del = () => { const arr = classes.slice(); arr.splice(sel, 1); set(arr); setSel(Math.max(0, sel - 1)); };
   const add = () => { const zoneId = Object.keys(zones)[0]; const arr = classes.concat([newClass(zoneId)]); set(arr); setSel(arr.length - 1); };
+  const exportTxt = () => downloadText("it-classes_" + exportStamp() + ".txt", buildClassesTxt(classes));
   return (
     <div className="cls-layout">
       <div className="cls-list">
@@ -256,7 +296,7 @@ function ClassesEditor({ classes, zones, set }) {
           </button>
         ))}
       </div>
-      <div>{cur ? <ClassEditor cls={cur} zones={zones} onChange={updateCur} onDelete={del} /> : <div className="panel">Нет классов. Добавьте первый.</div>}</div>
+      <div>{cur ? <ClassEditor cls={cur} zones={zones} onChange={updateCur} onDelete={del} onExport={exportTxt} /> : <div className="panel">Нет классов. Добавьте первый.</div>}</div>
     </div>
   );
 }
