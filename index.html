@@ -846,119 +846,127 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
     }
   }, [focusedZone, floor]);
 
-  // Колесо мыши (зум к курсору на десктопе)
+  // Колесо мыши (зум к курсору)
   useEffectD(() => {
     const stage = stageRef.current;
     if (!stage) return;
     const onWheel = (e) => {
       e.preventDefault();
-      const frame = frameRef.current;
-      if (!frame) return;
-      const rect = frame.getBoundingClientRect();
-      const cxScreen = rect.left + rect.width / 2;
-      const cyScreen = rect.top + rect.height / 2;
-      const v = viewRef.current;
+      const rect = stage.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const relX = e.clientX - cx;
+      const relY = e.clientY - cy;
       const factor = Math.exp(-e.deltaY * 0.0014);
-      const k2 = clampK(v.k * factor);
-      const ratio = k2 / v.k;
-      const dx = (e.clientX - cxScreen) * (1 - ratio);
-      const dy = (e.clientY - cyScreen) * (1 - ratio);
       setAnimated(false);
-      setView({ k: k2, x: v.x + dx, y: v.y + dy });
+      setView((v) => {
+        const k2 = clampK(v.k * factor);
+        const ratio = k2 / v.k;
+        return {
+          k: k2,
+          x: v.x * ratio + relX * (1 - ratio),
+          y: v.y * ratio + relY * (1 - ratio)
+        };
+      });
     };
     stage.addEventListener("wheel", onWheel, { passive: false });
     return () => stage.removeEventListener("wheel", onWheel);
   }, []);
 
-  // Тач-жесты для мобильных (1 палец — свайп/пан, 2 пальца — pinch-to-zoom)
+  // Тач-жесты для мобильных (1 палец — свайп, 2 пальца — pinch-to-zoom)
   useEffectD(() => {
     const stage = stageRef.current;
     if (!stage) return;
 
+    let prevDist = 0;
+    let prevMidX = 0;
+    let prevMidY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let startX = 0;
+    let startY = 0;
+
     const onTouchStart = (e) => {
       if (editMode) return;
+      if (e.touches.length > 1 && e.cancelable) e.preventDefault();
+      setAnimated(false);
+
       if (e.touches.length === 1) {
         const t = e.touches[0];
-        const v = viewRef.current;
-        touchState.current = {
-          mode: "pan",
-          sx: t.clientX,
-          sy: t.clientY,
-          ox: v.x,
-          oy: v.y,
-          moved: false
-        };
-        setAnimated(false);
-      } else if (e.touches.length === 2) {
+        lastX = t.clientX;
+        lastY = t.clientY;
+        startX = t.clientX;
+        startY = t.clientY;
+        dragMoved.current = false;
+        prevDist = 0;
+      } else if (e.touches.length >= 2) {
         const t1 = e.touches[0], t2 = e.touches[1];
-        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        const v = viewRef.current;
-        touchState.current = {
-          mode: "pinch",
-          dist: Math.max(10, dist),
-          midX: (t1.clientX + t2.clientX) / 2,
-          midY: (t1.clientY + t2.clientY) / 2,
-          k: v.k,
-          x: v.x,
-          y: v.y,
-          moved: true
-        };
-        setAnimated(false);
+        prevDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        prevMidX = (t1.clientX + t2.clientX) / 2;
+        prevMidY = (t1.clientY + t2.clientY) / 2;
+        dragMoved.current = true;
       }
     };
 
     const onTouchMove = (e) => {
-      const ts = touchState.current;
-      if (!ts) return;
+      if (editMode) return;
       if (e.cancelable) e.preventDefault();
 
-      const frame = frameRef.current;
-      if (!frame) return;
-
-      if (ts.mode === "pan" && e.touches.length === 1) {
+      if (e.touches.length === 1) {
         const t = e.touches[0];
-        const dx = t.clientX - ts.sx;
-        const dy = t.clientY - ts.sy;
-        if (Math.hypot(dx, dy) > 6) ts.moved = true;
-        setView({ k: viewRef.current.k, x: ts.ox + dx, y: ts.oy + dy });
-      } else if (ts.mode === "pinch" && e.touches.length === 2) {
+        const dx = t.clientX - lastX;
+        const dy = t.clientY - lastY;
+        lastX = t.clientX;
+        lastY = t.clientY;
+
+        if (Math.hypot(t.clientX - startX, t.clientY - startY) > 6) {
+          dragMoved.current = true;
+        }
+
+        setView((v) => ({ ...v, x: v.x + dx, y: v.y + dy }));
+      } else if (e.touches.length >= 2) {
         const t1 = e.touches[0], t2 = e.touches[1];
-        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        const factor = dist / ts.dist;
-        const k2 = clampK(ts.k * factor);
-        const ratio = k2 / ts.k;
+        const currDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        const currMidX = (t1.clientX + t2.clientX) / 2;
+        const currMidY = (t1.clientY + t2.clientY) / 2;
 
-        const rect = frame.getBoundingClientRect();
-        const cxScreen = rect.left + rect.width / 2;
-        const cyScreen = rect.top + rect.height / 2;
-        const currentMidX = (t1.clientX + t2.clientX) / 2;
-        const currentMidY = (t1.clientY + t2.clientY) / 2;
+        if (prevDist > 0 && currDist > 0) {
+          const rect = stage.getBoundingClientRect();
+          const scx = rect.left + rect.width / 2;
+          const scy = rect.top + rect.height / 2;
+          const relX = prevMidX - scx;
+          const relY = prevMidY - scy;
 
-        const dx = (currentMidX - cxScreen) * (1 - ratio);
-        const dy = (currentMidY - cyScreen) * (1 - ratio);
+          const factor = currDist / prevDist;
+          const panDx = currMidX - prevMidX;
+          const panDy = currMidY - prevMidY;
 
-        setView({
-          k: k2,
-          x: ts.x * ratio + dx + (currentMidX - ts.midX),
-          y: ts.y * ratio + dy + (currentMidY - ts.midY)
-        });
+          setView((v) => {
+            const k2 = clampK(v.k * factor);
+            const ratio = k2 / v.k;
+            return {
+              k: k2,
+              x: v.x * ratio + relX * (1 - ratio) + panDx,
+              y: v.y * ratio + relY * (1 - ratio) + panDy
+            };
+          });
+        }
+
+        prevDist = currDist;
+        prevMidX = currMidX;
+        prevMidY = currMidY;
+        dragMoved.current = true;
       }
     };
 
     const onTouchEnd = (e) => {
-      if (e.touches.length === 0) {
-        touchState.current = null;
-      } else if (e.touches.length === 1 && touchState.current?.mode === "pinch") {
+      if (e.touches.length === 1) {
         const t = e.touches[0];
-        const v = viewRef.current;
-        touchState.current = {
-          mode: "pan",
-          sx: t.clientX,
-          sy: t.clientY,
-          ox: v.x,
-          oy: v.y,
-          moved: true
-        };
+        lastX = t.clientX;
+        lastY = t.clientY;
+        prevDist = 0;
+      } else if (e.touches.length === 0) {
+        prevDist = 0;
       }
     };
 
@@ -975,15 +983,14 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
     };
   }, [editMode]);
 
-  const onPointerDown = (e) => {
-    if (e.pointerType === "mouse" && (e.button === 0 || e.button === 1 || e.button === 2)) {
-      const v = viewRef.current;
-      pan.current = { sx: e.clientX, sy: e.clientY, ox: v.x, oy: v.y, moved: false };
-      setAnimated(false);
-      e.currentTarget.setPointerCapture && e.currentTarget.setPointerCapture(e.pointerId);
-    }
+  // Мышь для десктопа (drag-to-pan)
+  const onMouseDown = (e) => {
+    if (e.button !== 0 && e.button !== 1 && e.button !== 2) return;
+    const v = viewRef.current;
+    pan.current = { sx: e.clientX, sy: e.clientY, ox: v.x, oy: v.y, moved: false };
+    setAnimated(false);
   };
-  const onPointerMove = (e) => {
+  const onMouseMove = (e) => {
     if (!pan.current) return;
     const dx = e.clientX - pan.current.sx;
     const dy = e.clientY - pan.current.sy;
@@ -1049,10 +1056,10 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
   return (
     <div className="diorama-stage" ref={stageRef}
          onClick={onBackdrop}
-         onPointerDown={onPointerDown}
-         onPointerMove={onPointerMove}
-         onPointerUp={endPan}
-         onPointerLeave={endPan}
+         onMouseDown={onMouseDown}
+         onMouseMove={onMouseMove}
+         onMouseUp={endPan}
+         onMouseLeave={endPan}
          onContextMenu={(e) => e.preventDefault()}
          style={{ cursor: pan.current?.moved ? "grabbing" : "default" }}>
       <div className="diorama-frame" ref={frameRef}
@@ -1086,7 +1093,7 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
                       onClick={(e) => {
                         e.stopPropagation();
                         if (editMode && dragMoved.current) { dragMoved.current = false; return; }
-                        if (touchState.current?.moved || pan.current?.moved) return;
+                        if (dragMoved.current || pan.current?.moved) return;
                         onSelect(c.code);
                       }}
                       onMouseEnter={() => { if (!editMode) setHoverZone(c.zone); }}
@@ -1371,50 +1378,76 @@ function Artifact({ overlay, onClose }) {
     const el = wrapRef.current;
     if (!el || overlay !== "pyramid") return;
 
+    let prevDist = 0;
+    let prevMidX = 0;
+    let prevMidY = 0;
+    let lastX = 0;
+    let lastY = 0;
+
     const onTouchStart = (e) => {
+      if (e.touches.length > 1 && e.cancelable) e.preventDefault();
+      setAnim(false);
       if (e.touches.length === 1) {
         const t = e.touches[0];
-        setAnim(false);
-        tsRef.current = { mode: "pan", sx: t.clientX, sy: t.clientY, ox: v.x, oy: v.y };
-      } else if (e.touches.length === 2) {
+        lastX = t.clientX;
+        lastY = t.clientY;
+        prevDist = 0;
+      } else if (e.touches.length >= 2) {
         const t1 = e.touches[0], t2 = e.touches[1];
-        setAnim(false);
-        tsRef.current = {
-          mode: "pinch",
-          dist: Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY),
-          k: v.k, x: v.x, y: v.y,
-          midX: (t1.clientX + t2.clientX) / 2,
-          midY: (t1.clientY + t2.clientY) / 2
-        };
+        prevDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        prevMidX = (t1.clientX + t2.clientX) / 2;
+        prevMidY = (t1.clientY + t2.clientY) / 2;
       }
     };
 
     const onTouchMove = (e) => {
-      if (!tsRef.current) return;
       if (e.cancelable) e.preventDefault();
-      if (tsRef.current.mode === "pan" && e.touches.length === 1) {
+      if (e.touches.length === 1) {
         const t = e.touches[0];
-        const dx = t.clientX - tsRef.current.sx;
-        const dy = t.clientY - tsRef.current.sy;
-        setV((prev) => ({ ...prev, x: tsRef.current.ox + dx, y: ts.current?.oy || (tsRef.current.oy + dy) }));
-      } else if (tsRef.current.mode === "pinch" && e.touches.length === 2) {
+        const dx = t.clientX - lastX;
+        const dy = t.clientY - lastY;
+        lastX = t.clientX;
+        lastY = t.clientY;
+        setV((c) => ({ ...c, x: c.x + dx, y: c.y + dy }));
+      } else if (e.touches.length >= 2) {
         const t1 = e.touches[0], t2 = e.touches[1];
-        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-        const factor = dist / Math.max(10, tsRef.current.dist);
-        const k2 = clamp(tsRef.current.k * factor);
-        const ratio = k2 / tsRef.current.k;
-        const r = el.getBoundingClientRect();
-        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-        const currentMidX = (t1.clientX + t2.clientX) / 2;
-        const currentMidY = (t1.clientY + t2.clientY) / 2;
-        const dx = (currentMidX - cx) * (1 - ratio);
-        const dy = (currentMidY - cy) * (1 - ratio);
-        setV({ k: k2, x: tsRef.current.x * ratio + dx + (currentMidX - tsRef.current.midX), y: tsRef.current.y * ratio + dy + (currentMidY - tsRef.current.midY) });
+        const currDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        const currMidX = (t1.clientX + t2.clientX) / 2;
+        const currMidY = (t1.clientY + t2.clientY) / 2;
+
+        if (prevDist > 0 && currDist > 0) {
+          const r = el.getBoundingClientRect();
+          const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+          const relX = prevMidX - cx, relY = prevMidY - cy;
+          const factor = currDist / prevDist;
+          const panDx = currMidX - prevMidX, panDy = currMidY - prevMidY;
+
+          setV((c) => {
+            const k2 = clamp(c.k * factor);
+            const ratio = k2 / c.k;
+            return {
+              k: k2,
+              x: c.x * ratio + relX * (1 - ratio) + panDx,
+              y: c.y * ratio + relY * (1 - ratio) + panDy
+            };
+          });
+        }
+
+        prevDist = currDist;
+        prevMidX = currMidX;
+        prevMidY = currMidY;
       }
     };
 
     const onTouchEnd = (e) => {
-      if (e.touches.length === 0) tsRef.current = null;
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        lastX = t.clientX;
+        lastY = t.clientY;
+        prevDist = 0;
+      } else if (e.touches.length === 0) {
+        prevDist = 0;
+      }
     };
 
     el.addEventListener("touchstart", onTouchStart, { passive: false });
@@ -1428,12 +1461,12 @@ function Artifact({ overlay, onClose }) {
       el.removeEventListener("touchend", onTouchEnd);
       el.removeEventListener("touchcancel", onTouchEnd);
     };
-  }, [overlay, v.k, v.x, v.y]);
+  }, [overlay]);
 
   if (!overlay) return null;
   const isPyr = overlay === "pyramid";
   const onDown = (e) => {
-    if (!isPyr || e.pointerType !== "mouse") return;
+    if (!isPyr || (e.button !== 0 && e.button !== 1 && e.button !== 2)) return;
     e.preventDefault();
     panRef.current = { sx: e.clientX, sy: e.clientY, ox: v.x, oy: v.y };
     setAnim(false);
@@ -1452,7 +1485,7 @@ function Artifact({ overlay, onClose }) {
         <button className="artifact-close" onClick={onClose} aria-label="Закрыть">✕</button>
         {isPyr ? (
           <div className="artifact-zoom" ref={wrapRef}
-               onPointerDown={onDown} onPointerMove={onMove} onPointerUp={endPan} onPointerLeave={endPan}
+               onMouseDown={onDown} onMouseMove={onMove} onMouseUp={endPan} onMouseLeave={endPan}
                style={{ cursor: panRef.current ? "grabbing" : "grab" }}>
             <div ref={innerRef} style={{ transform: `translate(${v.x}px, ${v.y}px) scale(${v.k})`, transition: anim ? "transform .35s cubic-bezier(.4,0,.2,1)" : "none" }}>
               <img src="assets/pyramid.jpg" alt="ИТ-архитектура предприятия — пирамида" draggable="false" />
@@ -1644,6 +1677,11 @@ function App() {
 }
 
 (function () {
+  // Блокируем нативный зум страницы в Safari при пинче
+  document.addEventListener("gesturestart", function(e) { e.preventDefault(); }, { passive: false });
+  document.addEventListener("gesturechange", function(e) { e.preventDefault(); }, { passive: false });
+  document.addEventListener("gestureend", function(e) { e.preventDefault(); }, { passive: false });
+
   fetch("/api/content", { credentials: "same-origin" })
     .then(function (r) { if (r.status === 401) { location.replace("/login.html"); throw new Error("unauth"); } return r.json(); })
     .then(function (data) {
