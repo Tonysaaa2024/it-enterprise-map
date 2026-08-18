@@ -2,28 +2,31 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
 <title>Вход · Карта ИТ-предприятия</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@600;700;800&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
-  :root{ --ink:#16203A; --ink-2:#51607A; --ink-3:#8A97AD; --line:#E4E9F2; --primary:#0D41E1; --canvas:#F6F8FB; --panel:#fff; }
+  :root{
+    --ink:#16203A; --ink-2:#51607A; --ink-3:#8A97AD; --line:#E4E9F2; --primary:#0D41E1; --canvas:#F6F8FB; --panel:#fff;
+    --sat:env(safe-area-inset-top, 0px); --sab:env(safe-area-inset-bottom, 0px);
+  }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
+  html,body{margin:0;height:100%;width:100%}
   body{font-family:"Golos Text",system-ui,sans-serif;color:var(--ink);background:var(--canvas);
-       display:grid;place-items:center;min-height:100%;-webkit-font-smoothing:antialiased}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:36px 34px;width:min(92vw,380px);
+       display:grid;place-items:center;min-height:100%;padding:calc(16px + var(--sat)) 16px calc(16px + var(--sab));-webkit-font-smoothing:antialiased}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:32px 28px;width:min(100%,380px);
         box-shadow:0 24px 60px -34px rgba(20,32,58,.45)}
-  .logo{height:30px;margin-bottom:22px}
+  .logo{height:30px;margin-bottom:20px}
   h1{font-family:"Onest",sans-serif;font-size:21px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px}
-  p.sub{color:var(--ink-3);font-size:13.5px;margin:0 0 22px;line-height:1.45}
+  p.sub{color:var(--ink-3);font-size:13.5px;margin:0 0 20px;line-height:1.45}
   label{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin:0 0 7px}
   input{width:100%;border:1px solid var(--line);border-radius:11px;background:var(--canvas);padding:12px 14px;
-        font-family:inherit;font-size:15px;color:var(--ink);outline:none;transition:.15s}
+        font-family:inherit;font-size:16px;color:var(--ink);outline:none;transition:.15s;-webkit-appearance:none}
   input:focus{border-color:var(--primary);background:#fff}
   button{margin-top:16px;width:100%;border:0;border-radius:11px;background:var(--primary);color:#fff;
-          font-family:inherit;font-size:15px;font-weight:600;padding:12px 14px;cursor:pointer;transition:.15s}
+          font-family:inherit;font-size:15px;font-weight:600;padding:13px 14px;cursor:pointer;transition:.15s;-webkit-tap-highlight-color:transparent}
   button:hover{filter:brightness(1.06)}
   button:disabled{opacity:.6;cursor:default}
   .err{color:#D1453B;font-size:13px;margin-top:13px;min-height:18px}
