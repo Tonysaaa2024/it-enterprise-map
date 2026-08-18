@@ -372,8 +372,10 @@ a.vendor.vendor--link:hover{border-color:var(--primary);color:var(--primary);bac
     justify-content:space-between;
     align-items:center;
   }
-  .brand{gap:6px;flex-shrink:0}
-  .brand-logo{height:20px}
+  .brand{gap:6px;flex-shrink:0;display:flex;align-items:center}
+  .brand-logo-pic{display:flex;align-items:center}
+  .brand-logo{height:24px;width:auto;max-width:24px}
+  .app.dark .brand-logo{padding:3px 4px;border-radius:6px}
   .brand-divider{display:none}
   .brand-sub{display:none}
   .pyramid-btn{width:32px;height:32px;border-radius:8px;margin-left:0}
@@ -1658,7 +1660,10 @@ function App() {
     <div className={`app ${selected ? "app--panel" : ""} ${glossaryOpen ? "app--gloss" : ""} ${t.pulse ? "" : "no-pulse"} ${t.dark ? "dark" : ""}`}>
       <header className="topbar">
         <div className="brand">
-          <img className="brand-logo" src="assets/globus-logo.svg" alt="Globus" />
+          <picture className="brand-logo-pic">
+            <source media="(max-width: 768px)" srcSet="assets/globus-mark.svg" />
+            <img className="brand-logo" src="assets/globus-logo.svg" alt="Globus" />
+          </picture>
           <div className="brand-divider"></div>
           <div className="brand-text">
             <button className="brand-sub brand-sub-btn" onClick={() => setOverlay("about")} title="О компании">{(window.HEADER||{}).brandSub}</button>
