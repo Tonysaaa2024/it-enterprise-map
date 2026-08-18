@@ -1166,7 +1166,7 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
   const layout = [];
   window.FLOOR_ORDER.forEach((zid) => {
     const z = window.ZONES[zid];
-    if (!z || (z.building || 1) !== floor) return;
+    if (!z || (typeof z.building === "number" ? z.building : 1) !== floor) return;
     const all = window.CLASSES.filter((c) => c.zone === zid && c.map !== false);
     const r = z.rect || { x: 10, y: 40, w: 15, h: 36 };
     const auto = all.filter((c) => !getPos(c));
@@ -1217,11 +1217,11 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
              transition: animated ? "transform .62s cubic-bezier(.4,0,.2,1)" : "none",
            }}>
         <img className="diorama-img"
-             src={dark ? (floor === 2 ? "assets/floor2-dark.png?v=20260818c" : "assets/floor1-dark.png?v=20260818c") : (floor === 2 ? "assets/floor2.png?v=20260818c" : "assets/floor1.png?v=20260818c")}
+             src={dark ? (floor === 2 ? "assets/floor2-dark.png?v=20260818d" : "assets/floor1-dark.png?v=20260818d") : (floor === 2 ? "assets/floor2.png?v=20260818d" : "assets/floor1.png?v=20260818d")}
              alt="Разрез предприятия" draggable="false" />
 
         <div className="room-caps">
-          {window.FLOOR_ORDER.filter((zid) => (window.ZONES[zid].building || 1) === floor).map((zid) => {
+          {window.FLOOR_ORDER.filter((zid) => window.ZONES[zid] && (typeof window.ZONES[zid].building === "number" ? window.ZONES[zid].building : 1) === floor).map((zid) => {
             const z = window.ZONES[zid]; const r = z.rect || { x: 10, y: 40, w: 15 };
             return (
               <div key={zid} className="room-cap"
@@ -1283,7 +1283,7 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
       </div>
 
       <div className="diorama-zonekey">
-        {window.FLOOR_ORDER.filter((zid) => (window.ZONES[zid].building || 1) === floor).map((zid) => {
+        {window.FLOOR_ORDER.filter((zid) => window.ZONES[zid] && (typeof window.ZONES[zid].building === "number" ? window.ZONES[zid].building : 1) === floor).map((zid) => {
           const z = window.ZONES[zid];
           return (
             <button key={zid}
