@@ -1051,6 +1051,11 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
 
   const activeZone = focusedZone || hoverZone;
 
+  // Динамическая компенсация масштаба меток при зуме:
+  // При приближении (zoom in) метки не раздуваются в гигантские баннеры,
+  // а при отдалении (zoom out) остаются аккуратными и читаемыми
+  const pinScale = Math.max(0.38, Math.min(1.35, 1 / Math.pow(view.k, 0.75)));
+
   // Раскладка хотспотов ровной сеткой внутри прямоугольника комнаты (zone.rect).
   // позиция метки: ручная (posOverrides → c.pos) или авто-сетка «кирпичиком»
   const getPos = (c) => (posOverrides && posOverrides[c.code]) || c.pos || null;
@@ -1114,7 +1119,13 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
           {window.FLOOR_ORDER.filter((zid) => (window.ZONES[zid].building || 1) === floor).map((zid) => {
             const z = window.ZONES[zid]; const r = z.rect || { x: 10, y: 40, w: 15 };
             return (
-              <div key={zid} className="room-cap" style={{ left: `${r.x + r.w / 2}%`, top: `${(r.y || 40) - 17}%`, "--accent": z.accent }}>
+              <div key={zid} className="room-cap"
+                   style={{
+                     left: `${r.x + r.w / 2}%`,
+                     top: `${(r.y || 40) - 17}%`,
+                     transform: `translate(-50%, -50%) scale(${pinScale})`,
+                     "--accent": z.accent
+                   }}>
                 {z.short || z.title}
               </div>
             );
@@ -1128,7 +1139,12 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
             return (
               <button key={c.code}
                       className={`hotspot hs--${c.zone} ${active ? "is-active" : ""} ${dim ? "is-dim" : ""} ${pulse ? "" : "no-pulse-hs"} ${editMode ? "is-draggable" : ""}`}
-                      style={{ left: `${x}%`, top: `${y}%`, "--accent": z.accent }}
+                      style={{
+                        left: `${x}%`,
+                        top: `${y}%`,
+                        transform: `translate(-50%, -50%) scale(${pinScale})`,
+                        "--accent": z.accent
+                      }}
                       onPointerDown={editMode ? startDrag(c.code) : undefined}
                       onClick={(e) => {
                         e.stopPropagation();
