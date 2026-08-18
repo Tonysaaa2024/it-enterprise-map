@@ -1156,19 +1156,13 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
   const activeZone = focusedZone || hoverZone;
 
   // Динамическая компенсация масштаба меток при зуме:
-  // При приближении (zoom in) метки не раздуваются в гигантские баннеры,
-  // а при отдалении (zoom out) остаются аккуратными и читаемыми
-  const pinScale = Math.max(0.38, Math.min(1.35, 1 / Math.pow(view.k, 0.75)));
-
-  // Раскладка хотспотов ровной сеткой внутри прямоугольника комнаты (zone.rect).
-  // позиция метки: ручная (posOverrides → c.pos) или авто-сетка «кирпичиком»
-  const getPos = (c) => (posOverrides && posOverrides[c.code]) || c.pos || null;
+  // При приближ�  const getPos = (c) => (posOverrides && posOverrides[c.code]) || c.pos || null;
   const layout = [];
   window.FLOOR_ORDER.forEach((zid) => {
     const z = window.ZONES[zid];
-    if (!z || (typeof z.building === "number" ? z.building : 1) !== floor) return;
+    if (!z || z.building !== floor || !z.rect) return;
     const all = window.CLASSES.filter((c) => c.zone === zid && c.map !== false);
-    const r = z.rect || { x: 10, y: 40, w: 15, h: 36 };
+    const r = z.rect;
     const auto = all.filter((c) => !getPos(c));
     const n = auto.length;
     const perRow = n === 1 ? 1 : 2;
@@ -1221,8 +1215,11 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
              alt="Разрез предприятия" draggable="false" />
 
         <div className="room-caps">
-          {window.FLOOR_ORDER.filter((zid) => window.ZONES[zid] && (typeof window.ZONES[zid].building === "number" ? window.ZONES[zid].building : 1) === floor).map((zid) => {
-            const z = window.ZONES[zid]; const r = z.rect || { x: 10, y: 40, w: 15 };
+          {window.FLOOR_ORDER.filter((zid) => {
+            const z = window.ZONES[zid];
+            return z && z.building === floor && z.rect;
+          }).map((zid) => {
+            const z = window.ZONES[zid]; const r = z.rect;
             return (
               <div key={zid} className="room-cap"
                    style={{
@@ -1283,11 +1280,14 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
       </div>
 
       <div className="diorama-zonekey">
-        {window.FLOOR_ORDER.filter((zid) => window.ZONES[zid] && (typeof window.ZONES[zid].building === "number" ? window.ZONES[zid].building : 1) === floor).map((zid) => {
+        {window.FLOOR_ORDER.filter((zid) => {
+          const z = window.ZONES[zid];
+          return z && z.building === floor && z.rect;
+        }).map((zid) => {
           const z = window.ZONES[zid];
           return (
             <button key={zid}
-                    className={`zk ${activeZone === zid ? "is-on" : ""}`}
+                    className={}
                     style={{ "--accent": z.accent }}
                     onMouseEnter={() => setHoverZone(zid)}
                     onMouseLeave={() => setHoverZone(null)}
