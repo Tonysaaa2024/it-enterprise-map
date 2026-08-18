@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
 <title>Карта ИТ-предприятия · Globus IT</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -1214,7 +1217,7 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
              transition: animated ? "transform .62s cubic-bezier(.4,0,.2,1)" : "none",
            }}>
         <img className="diorama-img"
-             src={dark ? (floor === 2 ? "assets/floor2-dark.png" : "assets/floor1-dark.png") : (floor === 2 ? "assets/floor2.png" : "assets/floor1.png")}
+             src={dark ? (floor === 2 ? "assets/floor2-dark.png?v=20260818c" : "assets/floor1-dark.png?v=20260818c") : (floor === 2 ? "assets/floor2.png?v=20260818c" : "assets/floor1.png?v=20260818c")}
              alt="Разрез предприятия" draggable="false" />
 
         <div className="room-caps">
@@ -1757,8 +1760,8 @@ function App() {
       <header className="topbar">
         <div className="brand">
           <picture className="brand-logo-pic">
-            <source media="(max-width: 768px)" srcSet="assets/globus-mark.svg" />
-            <img className="brand-logo" src="assets/globus-logo.svg" alt="Globus" />
+            <source media="(max-width: 768px)" srcSet="assets/globus-mark.svg?v=20260818c" />
+            <img className="brand-logo" src="assets/globus-logo.svg?v=20260818c" alt="Globus" />
           </picture>
           <div className="brand-divider"></div>
           <div className="brand-text">
