@@ -261,28 +261,123 @@ a.vendor.vendor--link:hover{border-color:var(--primary);color:var(--primary);bac
 .bmap .marker-pulse{display:none}
 .bmap .marker-dot{fill:var(--accent)}
 
-/* Dark theme */
+/* ==================== Comprehensive Dark Theme ==================== */
 .app.dark{
-  --ink:#EAEEF5; --ink-2:#AEB8C7; --ink-3:#7E8898;
-  --line:#3B414D; --line-2:#333944;
-  --canvas:#22262E; --panel:#2B303A;
+  --ink:#F1F4FA; --ink-2:#A5B2C6; --ink-3:#707E94;
+  --line:#2E3544; --line-2:#242B38;
+  --canvas:#141822; --panel:#1A1E28;
 }
-.app.dark .diorama-stage{background:#1B1E24}
-.app.dark .topbar{background:#2B303A;border-bottom-color:#3B414D}
-.app.dark .brand-logo{background:#fff;border-radius:7px;padding:4px 9px}
-.app.dark .brand-divider{background:#3B414D}
-.app.dark .diorama-help,
-.app.dark .zk,
-.app.dark .zc-btn{background:rgba(43,48,58,.92);color:var(--ink-2)}
-.app.dark .zc-btn{color:var(--ink)}
-.app.dark .hs-label{background:rgba(43,48,58,.96);border-color:color-mix(in srgb,var(--accent) 50%,#2B303A)}
-.app.dark .metric,
-.app.dark .vendor,
-.app.dark .gl-search{background:#22262E}
-.app.dark .sb-topbar{background:#2B303A;border-bottom-color:#3B414D}
-.app.dark .sb-close,
-.app.dark .gl-close{background:#2B303A}
-.app.dark .stage{background:#1B1E24}
+
+/* Stage & Background */
+.app.dark .diorama-stage{background:#0E1118}
+.app.dark .diorama-img{filter:invert(0.91) hue-rotate(185deg) brightness(0.86) contrast(1.18)}
+.app.dark .stage{background:#0E1118}
+
+/* Topbar & Controls */
+.app.dark .topbar{background:#1A1E28;border-bottom-color:#282E3D}
+.app.dark .brand-logo{background:#fff;border-radius:6px;padding:2px 5px}
+.app.dark .brand-divider{background:#282E3D}
+.app.dark .brand-sub{color:#A5B2C6}
+.app.dark .brand-sub-btn{color:#A5B2C6}
+.app.dark .brand-sub-btn:hover{color:#fff}
+.app.dark .tb-hint{color:#707E94}
+
+.app.dark .style-switch{background:#12151D;border-color:#282E3D}
+.app.dark .style-btn{color:#A5B2C6}
+.app.dark .style-btn:hover{color:#fff}
+.app.dark .style-btn.is-active{background:#262D3D;color:#F1F4FA;box-shadow:0 2px 8px rgba(0,0,0,0.4)}
+
+.app.dark .gloss-btn{background:#222938;border-color:#323C50;color:#5B8DFF}
+.app.dark .gloss-btn:hover{background:#283042;color:#7CA6FF}
+.app.dark .gloss-btn.is-active{background:#0D41E1;color:#fff;border-color:#0D41E1}
+
+.app.dark .icon-btn{background:#222938;border-color:#323C50;color:#A5B2C6}
+.app.dark .icon-btn:hover{color:#fff;border-color:#485672}
+.app.dark .pyramid-btn{background:#222938;border-color:#323C50;color:#A5B2C6}
+.app.dark .pyramid-btn:hover{border-color:#5B8DFF;color:#5B8DFF}
+
+/* Diorama HUD */
+.app.dark .diorama-help{background:rgba(26,30,40,.9);color:#707E94;border-color:#282E3D}
+.app.dark .zc-btn{background:rgba(26,30,40,.92);border-color:#2E3544;color:#F1F4FA;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+.app.dark .zc-btn:hover{border-color:#5B8DFF;color:#5B8DFF}
+.app.dark .reset-btn{background:#1E2330;border-color:#2E3544;color:#F1F4FA;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+.app.dark .reset-btn:hover{border-color:#5B8DFF;color:#5B8DFF}
+.app.dark .legend{background:rgba(26,30,40,.92);border-color:#2E3544;box-shadow:0 8px 28px rgba(0,0,0,.5)}
+.app.dark .legend-item{color:#A5B2C6}
+.app.dark .zk{background:rgba(26,30,40,.9);border-color:#2E3544;color:#A5B2C6;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.app.dark .zk:hover{color:#F1F4FA;border-color:var(--accent)}
+.app.dark .zk.is-on{background:#283042;color:#fff;border-color:var(--accent)}
+.app.dark .diorama-zonekey{background:linear-gradient(to top, rgba(14,17,24,0.98) 75%, transparent)}
+
+/* Map Pins & Hotspots */
+.app.dark .hs-dot{border-color:#1A1E28}
+.app.dark .hs-label{background:rgba(26,30,40,.94);border-color:color-mix(in srgb,var(--accent) 55%,#1A1E28);color:color-mix(in srgb,var(--accent) 85%,#fff);box-shadow:0 4px 12px rgba(0,0,0,.5)}
+.app.dark .hotspot:hover .hs-label,.app.dark .hotspot.is-active .hs-label{background:var(--accent);color:#fff}
+.app.dark .room-cap{box-shadow:0 4px 12px rgba(0,0,0,.45)}
+
+/* Sidebar & Card Contents */
+.app.dark .sidebar{background:#1A1E28;border-color:#282E3D}
+.app.dark .sb-topbar{background:#1A1E28;border-bottom-color:#282E3D}
+.app.dark .sb-close{background:#242A38;border-color:#323C50;color:#A5B2C6}
+.app.dark .sb-close:hover{background:#2C3548;color:#fff}
+.app.dark .sb-code{background:color-mix(in srgb,var(--accent) 22%,#1E2330);color:color-mix(in srgb,var(--accent) 85%,#fff)}
+.app.dark .sb-name{color:#F1F4FA}
+.app.dark .sb-full{color:#A5B2C6}
+.app.dark .sb-h{color:#707E94}
+.app.dark .sb-p{color:#D5DEEC}
+.app.dark .sb-pain{background:color-mix(in srgb,var(--accent) 18%,#1A1E28);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.app.dark .sb-pain .sb-h{color:color-mix(in srgb,var(--accent) 85%,#fff)}
+.app.dark .aka-chip{background:color-mix(in srgb,var(--accent) 16%,#1A1E28);border-color:color-mix(in srgb,var(--accent) 35%,transparent);color:color-mix(in srgb,var(--accent) 85%,#fff)}
+.app.dark .metric{background:#141822;border-color:#282E3D}
+.app.dark .metric-l{color:#8E9CB2}
+.app.dark .vendor{background:#141822;border-color:#282E3D;color:#F1F4FA}
+.app.dark .vendor--own{background:rgba(13,65,225,0.22);border-color:rgba(91,141,255,0.45);color:#7CA6FF}
+.app.dark a.vendor.vendor--link:hover{background:#242D42;border-color:#5B8DFF;color:#7CA6FF}
+.app.dark .vendors-empty{background:#141822;border-color:#282E3D;color:#8E9CB2}
+.app.dark .vendors-note{color:#707E94}
+.app.dark .related-chip{background:#141822;border-color:#282E3D}
+.app.dark .related-chip:hover{background:#222938;border-color:var(--accent)}
+.app.dark .related-name{color:#A5B2C6}
+
+/* Glossary Catalogue */
+.app.dark .glossary{background:#1A1E28;border-color:#282E3D}
+.app.dark .gl-head{border-bottom-color:#282E3D}
+.app.dark .gl-title{color:#F1F4FA}
+.app.dark .gl-close{background:#242A38;border-color:#323C50;color:#A5B2C6}
+.app.dark .gl-close:hover{background:#2C3548;color:#fff}
+.app.dark .gl-search{background:#12151D;border-color:#2E3544;color:#707E94}
+.app.dark .gl-search:focus-within{border-color:#5B8DFF;color:#5B8DFF}
+.app.dark .gl-search input{color:#F1F4FA}
+.app.dark .gl-search input::placeholder{color:#707E94}
+.app.dark .gl-item{background:#141822;border-color:#282E3D}
+.app.dark .gl-item:hover{background:#1E2433;border-color:var(--accent)}
+.app.dark .gl-item.is-active{background:color-mix(in srgb,var(--accent) 16%,#141822);border-color:var(--accent)}
+.app.dark .gl-name{color:#F1F4FA}
+.app.dark .gl-aka{color:#A5B2C6}
+.app.dark .gl-full{color:#707E94}
+
+/* SVG Blueprint / Schema Dark Mode */
+.app.dark .bmap-bg{fill:#0E1118}
+.app.dark .ground-line{stroke:#252B38}
+.app.dark .ground-label{fill:#51607A}
+.app.dark .building-roof{fill:#161B24;stroke:#2A3344}
+.app.dark .roof-mast{stroke:#38455C}
+.app.dark .floor-divider{stroke:#202634}
+.app.dark .floor-slab{fill:#141822;stroke:#222836}
+.app.dark .floor-tag-title{fill:#98B0DB}
+.app.dark .floor-tag-sub{fill:#5D6F8E}
+.app.dark .room-box{fill:#181D28;stroke:#283244}
+.app.dark .room:hover .room-box{fill:#222938;stroke:var(--accent)}
+.app.dark .room--active .room-box{fill:#262E40;stroke:var(--accent)}
+.app.dark .room-code{fill:#E2E8F4}
+.app.dark .room-name{color:#97A6BD}
+.app.dark .bmap--iso .building-body{fill:#141822;stroke:#283244}
+.app.dark .bmap--iso .room-box{fill:#181D28;stroke:color-mix(in srgb,var(--accent) 40%,#283244)}
+.app.dark .bmap--iso .room:hover .room-box{fill:#222938;stroke:var(--accent)}
+.app.dark .bmap--iso .room--active .room-box{fill:#262E40;stroke:var(--accent)}
+.app.dark .bmap--blueprint .bmap-bg{fill:#090E18}
+.app.dark .bmap--blueprint .building-body{fill:rgba(46,107,255,.05);stroke:#2E6BFF}
+.app.dark .bmap--blueprint .room-box{fill:rgba(18,24,36,.65);stroke:color-mix(in srgb,var(--accent) 60%,#2E6BFF)}
 
 .legend{position:absolute;left:50%;transform:translateX(-50%);bottom:20px;display:flex;gap:18px;background:rgba(255,255,255,.86);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:30px;padding:9px 20px;z-index:6;box-shadow:0 8px 26px -18px rgba(20,32,58,.5)}
 .legend-item{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--ink-2)}
