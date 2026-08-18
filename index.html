@@ -270,7 +270,7 @@ a.vendor.vendor--link:hover{border-color:var(--primary);color:var(--primary);bac
 
 /* Stage & Background */
 .app.dark .diorama-stage{background:#0E1118}
-.app.dark .diorama-img{filter:invert(0.91) hue-rotate(185deg) brightness(0.86) contrast(1.18)}
+.app.dark .diorama-img{filter:none}
 .app.dark .stage{background:#0E1118}
 
 /* Topbar & Controls */
@@ -956,7 +956,7 @@ const { useState: useStateD, useRef: useRefD, useEffect: useEffectD, useCallback
 
 const MIN_K = 0.65, MAX_K = 4.5, FOCUS_K = 1.85;
 
-function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pulse, editMode, posOverrides, onDrag }) {
+function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pulse, editMode, posOverrides, onDrag, dark }) {
   const stageRef = useRefD(null);
   const frameRef = useRefD(null);
   const [view, setView] = useStateD({ k: 1, x: 0, y: 0 });
@@ -1213,7 +1213,8 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
              transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})`,
              transition: animated ? "transform .62s cubic-bezier(.4,0,.2,1)" : "none",
            }}>
-        <img className="diorama-img" src={floor === 2 ? "assets/floor2.png" : "assets/floor1.png"}
+        <img className="diorama-img"
+             src={dark ? (floor === 2 ? "assets/floor2-dark.png" : "assets/floor1-dark.png") : (floor === 2 ? "assets/floor2.png" : "assets/floor1.png")}
              alt="Разрез предприятия" draggable="false" />
 
         <div className="room-caps">
@@ -1834,7 +1835,7 @@ function App() {
         <main className="stage">
           {mode === "diorama" ? (
             <DioramaMap floor={floor} selectedCode={selected} focusedZone={focusedZone} onSelect={select} onBackdrop={close} pulse={t.pulse}
-                        editMode={editMode} posOverrides={posOv} onDrag={onDrag} />
+                        editMode={editMode} posOverrides={posOv} onDrag={onDrag} dark={t.dark} />
           ) : (
             <BuildingMap styleId="iso" selectedCode={selected} focusedZone={focusedZone} onSelect={select} onBackdrop={close} />
           )}
