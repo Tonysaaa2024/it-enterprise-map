@@ -1287,7 +1287,7 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
           const z = window.ZONES[zid];
           return (
             <button key={zid}
-                    className={}
+                    className={`zk ${hoverZone === zid ? "is-on" : ""}`}
                     style={{ "--accent": z.accent }}
                     onMouseEnter={() => setHoverZone(zid)}
                     onMouseLeave={() => setHoverZone(null)}
