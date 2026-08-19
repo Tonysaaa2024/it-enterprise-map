@@ -278,7 +278,7 @@ a.vendor.vendor--link:hover{border-color:var(--primary);color:var(--primary);bac
 
 /* Topbar & Controls */
 .app.dark .topbar{background:#1A1E28;border-bottom-color:#282E3D}
-.app.dark .brand-logo{background:#fff;border-radius:6px;padding:2px 5px}
+.app.dark .brand-logo{background:transparent;padding:0}
 .app.dark .brand-divider{background:#282E3D}
 .app.dark .brand-sub{color:#A5B2C6}
 .app.dark .brand-sub-btn{color:#A5B2C6}
@@ -473,7 +473,7 @@ a.vendor.vendor--link:hover{border-color:var(--primary);color:var(--primary);bac
   .brand{gap:6px;flex-shrink:0;display:flex;align-items:center}
   .brand-logo-pic{display:flex;align-items:center}
   .brand-logo{height:24px;width:auto;max-width:24px}
-  .app.dark .brand-logo{padding:3px 4px;border-radius:6px}
+  .app.dark .brand-logo{padding:0}
   .brand-divider{display:none}
   .brand-sub{display:none}
   .pyramid-btn{width:32px;height:32px;border-radius:8px;margin-left:0}
@@ -1767,7 +1767,7 @@ function App() {
         <div className="brand">
           <picture className="brand-logo-pic">
             <source media="(max-width: 768px)" srcSet="assets/globus-mark.svg?v=20260818c" />
-            <img className="brand-logo" src="assets/globus-logo.svg?v=20260818c" alt="Globus" />
+            <img className="brand-logo" src={t.dark ? "assets/globus-logo-dark.svg?v=20260819" : "assets/globus-logo.svg?v=20260819"} alt="Globus" />
           </picture>
           <div className="brand-divider"></div>
           <div className="brand-text">
