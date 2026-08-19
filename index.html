@@ -1156,7 +1156,13 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
   const activeZone = focusedZone || hoverZone;
 
   // Динамическая компенсация масштаба меток при зуме:
-  // При приближ�  const getPos = (c) => (posOverrides && posOverrides[c.code]) || c.pos || null;
+  // При приближении (zoom in) метки не раздуваются в гигантские баннеры,
+  // а при отдалении (zoom out) остаются аккуратными и читаемыми
+  const pinScale = Math.max(0.38, Math.min(1.35, 1 / Math.pow(view.k, 0.75)));
+
+  // Раскладка хотспотов ровной сеткой внутри прямоугольника комнаты (zone.rect).
+  // позиция метки: ручная (posOverrides → c.pos) или авто-сетка «кирпичиком»
+  const getPos = (c) => (posOverrides && posOverrides[c.code]) || c.pos || null;
   const layout = [];
   window.FLOOR_ORDER.forEach((zid) => {
     const z = window.ZONES[zid];
@@ -1287,7 +1293,7 @@ function DioramaMap({ floor, selectedCode, focusedZone, onSelect, onBackdrop, pu
           const z = window.ZONES[zid];
           return (
             <button key={zid}
-                    className={`zk ${hoverZone === zid ? "is-on" : ""}`}
+                    className={`zk ${activeZone === zid ? "is-on" : ""}`}
                     style={{ "--accent": z.accent }}
                     onMouseEnter={() => setHoverZone(zid)}
                     onMouseLeave={() => setHoverZone(null)}
