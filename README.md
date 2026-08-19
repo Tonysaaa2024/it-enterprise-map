@@ -6,8 +6,9 @@
 
 Сайт закрыт **паролем для входа**, а контент (карточки, зоны, тексты шапки) и пароли редактируются в **админке**. Фронтенд — статический HTML/React, бэкенд — serverless-функции Vercel с хранилищем (Vercel KV / Upstash Redis). Деплой автоматический по `git push`.
 
-- **Прод:** https://it-enterprise-map.vercel.app
-- **Админка:** https://it-enterprise-map.vercel.app/admin.html
+- **Основной URL (РФ без VPN):** https://globus.tonyvibe.ru
+- **Админка:** https://globus.tonyvibe.ru/admin.html
+- **Прямой URL Vercel:** https://it-enterprise-map.vercel.app
 - **Репозиторий:** https://github.com/Tonysaaa2024/it-enterprise-map
 
 ---
@@ -26,7 +27,7 @@
 ## Структура файлов
 
 ```
-IT CLASSES WEB SITE/
+it-enterprise-map/
 ├── index.html        # карта (фронтенд): тянет контент с /api/content, гейт по паролю
 ├── login.html        # страница входа на сайт (пароль зрителя)
 ├── admin.html        # админка: редактор контента + смена паролей (React)
@@ -42,11 +43,15 @@ IT CLASSES WEB SITE/
 │   ├── store.js      #   доступ к KV + первичное заполнение
 │   └── seed.js       #   данные по умолчанию (зоны/классы/шапка) + авто-миграция формата
 └── assets/
-    ├── floor1.png      # диорама этажа 1 «Операции» (~4,5 МБ)
-    ├── floor2.png      # диорама этажа 2 «Технологии и люди» (~4,5 МБ)
-    ├── about.jpg       # слайд «О компании» (артефакт по тексту «Классы IT решений»)
-    ├── pyramid.jpg     # пирамида ИТ-архитектуры (артефакт по значку ▲)
-    └── globus-logo.svg
+    ├── floor1.png          # диорама этажа 1 «Операции» (~4,5 МБ)
+    ├── floor1-dark.png     # тёмная диорама этажа 1 с неоновой подсветкой
+    ├── floor2.png          # диорама этажа 2 «Технологии и люди» (~4,5 МБ)
+    ├── floor2-dark.png     # тёмная диорама этажа 2 с неоновой подсветкой
+    ├── about.jpg           # слайд «О компании» (артефакт по тексту «Классы IT решений»)
+    ├── pyramid.jpg         # пирамида ИТ-архитектуры (артефакт по значку ▲)
+    ├── globus-logo.svg     # векторный логотип Globus (светлая тема)
+    ├── globus-logo-dark.svg# векторный логотип Globus (тёмная тема)
+    └── globus-mark.svg     # компактный знак Globus для мобильных устройств
 ```
 
 Внутри `index.html` фронтенд разбит на `<script>`-блоки: BuildingMap (SVG-разрез, режим «Схема»), DioramaMap (растровая диорама с хотспотами, переключателем этажей, подписями комнат, zoom/pan и режимом ручной расстановки меток), Sidebar (карточка класса), Glossary (словарь), App (оболочка), Tweaks panel (настройки). Контент (`window.ZONES`/`FLOOR_ORDER`/`CLASSES`/`HEADER`) больше не зашит в файл — он загружается с `/api/content` при старте.
